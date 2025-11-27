@@ -1025,9 +1025,6 @@ SunV3::uuencode(Buffer & buf,
     for (cur = ubp; cur < (ubp + whole_lines - 2); cur += 45) {
 	buf.appendData("M", 1);
 	encode_uue_line(buf, cur, 45);
-#ifdef DEAD_WOOD
-	DtMailProcessClientEvents();
-#endif
     }
 
     // Write the partial line.
