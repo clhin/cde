@@ -112,19 +112,6 @@ Widget PasswordDialogManager::createDialog ( Widget parent )
   return dialog;
 }
 
-#ifdef DEAD_WOOD
-char *
-PasswordDialogManager::userName(){
-  return ( XmTextFieldGetString( _user ) );
-}
-
-char *
-PasswordDialogManager::password(){
-//  return ( XmTextFieldGetString( _password ) );
-  return _pwd;
-}
-#endif /* DEAD_WOOD */
-
 void
 PasswordDialogManager::modifyVerifyCallback( Widget w,
 		      XtPointer clientData,
@@ -147,10 +134,3 @@ PasswordDialogManager::modifyVerify( Widget ,
   }
 }
 
-#ifdef DEAD_WOOD
-void
-PasswordDialogManager::resetPassword()
-{
-    _pwd[0] = 0;
-}
-#endif /* DEAD_WOOD */
