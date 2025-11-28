@@ -340,7 +340,7 @@ CompleteSave (void)
    * Start a wait state - don't want anything to happen while
    * ICCC clients are being saved
    */
-  ShowWaitState(True);
+  EnterWaitState();
   
   resSpec = (char *) SM_MALLOC(resSize * sizeof(char));
   if (resSpec==NULL)
@@ -350,7 +350,7 @@ CompleteSave (void)
   }
 
   if (!WriteClientDatabase ()) {
-      ShowWaitState(False);
+      LeaveWaitState();
       SM_FREE(resSpec);
       return (-1);
   }
@@ -381,7 +381,7 @@ CompleteSave (void)
    */
   if(OutputResource())
   {
-      ShowWaitState(False);
+      LeaveWaitState();
       SM_FREE(resSpec);
       return(-1);
   }
@@ -398,7 +398,7 @@ CompleteSave (void)
  
   PruneSessionDirectory ();
 
-  ShowWaitState(False);
+  LeaveWaitState();
 
   return(0);
 }
