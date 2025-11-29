@@ -12,6 +12,7 @@
 *                                                                      *
 *                  David Korn <dgk@research.att.com>                   *
 *                  Martijn Dekker <martijn@inlv.org>                   *
+*            Johnothan King <johnothanking@protonmail.com>             *
 *                                                                      *
 ***********************************************************************/
 
@@ -29,7 +30,9 @@
 const Shtable_t shtab_options[] =
 {
 	"allexport",			SH_ALLEXPORT,
+#if SHOPT_ESH || SHOPT_VSH
 	"nobackslashctrl",		SH_NOBACKSLCTRL,
+#endif
 	"bgnice",			SH_BGNICE,
 #if SHOPT_BRACEPAT
 	"braceexpand",			SH_BRACEEXPAND,
@@ -42,7 +45,7 @@ const Shtable_t shtab_options[] =
 	"noexec",			SH_NOEXEC,
 	"functrace",			SH_FUNCTRACE,
 	"noglob",			SH_NOGLOB,
-#if SHOPT_GLOBCASEDET
+#if SHOPT_GLOBCASEDET || !defined(SHOPT_GLOBCASEDET)
 	"globcasedetect",		SH_GLOBCASEDET,
 #endif
 	"globstar",			SH_GLOBSTARS,

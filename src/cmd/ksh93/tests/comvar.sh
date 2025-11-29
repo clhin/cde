@@ -2,7 +2,7 @@
 #                                                                      #
 #               This software is part of the ast package               #
 #          Copyright (c) 1982-2012 AT&T Intellectual Property          #
-#          Copyright (c) 2020-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2020-2024 Contributors to ksh 93u+m           #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
 #                                                                      #
@@ -574,7 +574,7 @@ got=$(typeset -p x)
 x=(typeset -C -a y;float z=2)
 got=$(print -C x)
 expected='(typeset -C -a y;typeset -l -E z=2)'
-[[ $expected == "$got" ]] || err_exit "print -C x exects '$expected' got '$got'"
+[[ $expected == "$got" ]] || err_exit "print -C x expects '$expected' got '$got'"
 
 unset vx vy
 compound vx=(
@@ -710,6 +710,27 @@ EOF
 got=$(set +x; eval 'typeset -a arr=( ( (a $(($(echo 1) + 1)) c)1))' 2>&1; typeset -p arr)
 exp='typeset -a arr=(((a 2 c) 1) )'
 [[ $got == "$exp" ]] || err_exit "'echo' environment messed up by compound assignment" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+
+# ======
+# crash in 'read -C' when given assignment-like variable name
+# https://github.com/ksh93/ksh/issues/606#issuecomment-1474858962
+exp=': read: foo=bar: invalid variable name'
+got=$({ "$SHELL" -c 'read -C foo=bar </dev/null'; } 2>&1)
+[[ e=$? -eq 1 && $got == *"$exp" ]] || err_exit 'read -C foo=bar' \
+	"(expected status 1, *$(printf %q "$exp");" \
+	"got status $e$( ((e>128)) && print -n /SIG && kill -l "$e"), $(printf %q "$got"))"
+
+# ======
+# test preservation of -C -a attributes
+# backported from ksh 93v- 2013-09-13
+unset c
+compound c
+compound -a c.c=( [4][5]=(integer i=5))
+c.c=()
+got=$(print -v c)
+exp=$'(\n\ttypeset -C -a c\n)'
+[[ $got == "$exp" ]] || err_exit 'setting compound array c.c=() does not preserve -C attribute' \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 
 # ======

@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2011 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2024 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -23,7 +23,6 @@
  */
 
 #include	<cdt.h>
-#include	"FEATURE/options"
 #include	"shnodes.h"
 #include	"shtable.h"
 #include	"lexstates.h"
@@ -46,7 +45,9 @@ struct _shlex_pvt_lexdata_
 {
 	char		nocopy;
 	char		paren;
-	char		dolparen;
+	char		dolparen;	/* set during the comsub() lexical analysis hack */
+	unsigned short	dolparen_eqparen;	/* flags up =( ... ) within a comsub */
+	char		dolparen_arithexp;	/* set while comsub() is lexing an arithmetic expansion */
 	char		nest;
 	char		docword;
 	char		nested_tilde;
@@ -78,11 +79,12 @@ typedef struct  _shlex_
 	int		digits;		/* numerical value with word token */
 	char		aliasok;	/* on when alias is legal */
 	char		assignok;	/* on when name=value is legal */
+	int		varnamelength;	/* length of variable name in assignment */
 	char		inexec;		/* on when processing exec */
 	char		intypeset;	/* 1 when processing typeset, 2 when processing enum */
 	char		comp_assign;	/* in compound assignment */
 	char		comsub;		/* parsing command substitution */
-	char		noreserv;	/* reserved works not legal */
+	char		noreserv;	/* reserved words not legal */
 	int		inlineno;	/* saved value of sh.inlineno */
 	int		firstline;	/* saved value of sh.st.firstline */
 	int		assignlevel;	/* nesting level for assignment */
@@ -154,7 +156,6 @@ typedef struct  _shlex_
 #define EOFSYM		04000	/* end-of-file */
 #define TESTUNOP	04001
 #define TESTBINOP	04002
-#define LABLSYM		04003
 #define IOVNAME		04004
 
 /* additional parser flag, others in <shell.h> */

@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2024 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -13,6 +13,7 @@
 *                  David Korn <dgk@research.att.com>                   *
 *                  Martijn Dekker <martijn@inlv.org>                   *
 *            Johnothan King <johnothanking@protonmail.com>             *
+*               K. Eugene Carlson <kvngncrlsn@gmail.com>               *
 *                                                                      *
 ***********************************************************************/
 #ifndef shell_h_defined
@@ -80,6 +81,8 @@ typedef union Shnode_u Shnode_t;
 #define	SH_PREINIT	18	/* set with SH_INIT before parsing options */
 #define SH_COMPLETE	19	/* set for command completion */
 #define SH_XARG		21	/* set while in xarg (command -x) mode */
+#define SH_NOTILDEXP	22	/* set to disable tilde expansion */
+#define SH_EXEC		23	/* set while in exec(1) */
 
 /*
  * Shell options (set -o). Used with sh_isoption(), sh_onoption(), sh_offoption().
@@ -122,7 +125,7 @@ typedef union Shnode_u Shnode_t;
 #define SH_DICTIONARY	30
 #define SH_PIPEFAIL	32
 #define SH_GLOBSTARS	33
-#if SHOPT_GLOBCASEDET
+#if SHOPT_GLOBCASEDET || !defined(SHOPT_GLOBCASEDET)
 #define SH_GLOBCASEDET	34
 #endif
 #define SH_RC		35
@@ -141,8 +144,8 @@ typedef union Shnode_u Shnode_t;
 #define SH_POSIX	46
 #if SHOPT_ESH || SHOPT_VSH
 #define SH_MULTILINE	47
-#endif
 #define SH_NOBACKSLCTRL	48
+#endif
 #define SH_LOGIN_SHELL	67
 #define SH_NOUSRPROFILE	79	/* internal use only */
 #define SH_COMMANDLINE	0x100	/* bit flag for invocation-only options ('set -o' cannot change them) */
@@ -304,7 +307,8 @@ struct Shell_s
 	int		topfd;
 	int		savesig;
 	unsigned char	*sigflag;	/* pointer to signal states */
-	char		intrap;
+	char		intrap;		/* set while executing a trap action */
+	char		intrap_exit_n;	/* set if 'exit n' within trap */
 	char		forked;
 	char		binscript;
 	char		funload;
@@ -334,11 +338,12 @@ struct Shell_s
 	struct dolnod	*arglist;
 	int16_t		fn_depth;	/* scoped ksh-style function call depth */
 	int16_t		dot_depth;	/* dot-script and POSIX function call depth */
-	int		hist_depth;
+	char		invoc_local;	/* set when inside of an invocation-local scope */
 	int		xargmin;
 	int		xargmax;
 	int		xargexit;
-	int		nenv;
+	int		save_env_n;	/* number of saved pointers to environment variables with invalid names */
+	char		**save_env;	/* saved pointers to environment variables with invalid names */
 	mode_t		mask;
 	void		*init_context;
 	void		*mac_context;
@@ -346,9 +351,7 @@ struct Shell_s
 	void		*arg_context;
 	void		*pathlist;
 	void		*cdpathlist;
-	char		**argaddr;
 	char		cond_expan;	/* set while processing ${var=val}, ${var:=val}, ${var?err}, ${var:?err} */
-	void		*optlist;
 	struct sh_scoped global;
 	struct checkpt	checkbase;
 	Shinit_f	userinit;
@@ -376,6 +379,14 @@ struct Shell_s
 	Namfun_t	nvfun;
 	char		*mathnodes;
 	char		*bltin_dir;
+	char		tilde_block;	/* set to block .sh.tilde.{get,set} discipline */
+	/* nv_putsub() hack for nv_create() to avoid double arithmetic evaluation */
+	char		nv_putsub_already_called_sh_arith;
+	int		nv_putsub_idx;	/* saves array index obtained by nv_putsub() using sh_arith() */
+#if SHOPT_OPTIMIZE
+	char		**argaddr;	/* pointer to arguments for the loop invariants optimizer */
+	void		*optlist;	/* linked list of invariant nodes */
+#endif
 #if SHOPT_FILESCAN
 	char		*cur_line;
 #endif /* SHOPT_FILESCAN */
@@ -416,7 +427,7 @@ extern Libcomp_t *liblist;
 
 extern void		sh_subfork(void);
 extern Shell_t		*sh_init(int,char*[],Shinit_f);
-extern int		sh_reinit(char*[]);
+extern void		sh_reinit(void);
 extern int 		sh_eval(Sfio_t*,int);
 extern void 		sh_delay(double,int);
 extern void		*sh_parse(Sfio_t*,int);

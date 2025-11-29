@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1985-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2024 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -17,8 +17,13 @@
 *            Johnothan King <johnothanking@protonmail.com>             *
 *                                                                      *
 ***********************************************************************/
-#pragma clang diagnostic ignored "-Wdeprecated-register"
+#if __clang__
 #pragma clang diagnostic ignored "-Wparentheses"
+#pragma clang diagnostic ignored "-Wmissing-braces"
+#elif __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wmissing-braces"
+#endif
 /*
  * Glenn Fowler
  * AT&T Research
@@ -68,10 +73,6 @@ static struct _m_ map[] =
 #ifdef SIGCHLD
 #define HAD_SIGCHLD	1
 "Child status change",		"CHLD",		SIGCHLD,
-#endif
-#ifdef SIGCLD
-#define HAD_SIGCLD	1
-"Death of child", 		"CLD",		SIGCLD,
 #endif
 #ifdef SIGCONT
 #define HAD_SIGCONT	1
@@ -294,15 +295,15 @@ extern char*		strsignal(int);
 #endif
 
 int
-main()
+main(void)
 {
-	register int	i;
-	register int	j;
-	register int	k;
-	int		m;
-	int		n;
+	int	i;
+	int	j;
+	int	k;
+	int	m;
+	int	n;
 #if _lib_strsignal
-	char*		s;
+	char*	s;
 #endif
 
 	k = 0;
@@ -313,6 +314,7 @@ main()
 				k = j;
 			mapindex[j] = i;
 		}
+	n = 1;
 #ifdef SIGRTMIN
 	i = SIGRTMIN;
 #ifdef SIGRTMAX
@@ -327,7 +329,6 @@ main()
 		if (j > k)
 			k = j;
 		mapindex[i] = RANGE_MIN | RANGE_RT;
-		n = 1;
 		while (++i < j)
 			mapindex[i] = RANGE_RT | n++;
 		mapindex[j] = RANGE_MAX | RANGE_RT | n;

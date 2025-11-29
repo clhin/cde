@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1992-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -13,6 +13,7 @@
 *                 Glenn Fowler <gsf@research.att.com>                  *
 *                  David Korn <dgk@research.att.com>                   *
 *                  Martijn Dekker <martijn@inlv.org>                   *
+*            Johnothan King <johnothanking@protonmail.com>             *
 *                                                                      *
 ***********************************************************************/
 /*
@@ -25,7 +26,7 @@
  */
 
 static const char usage[] =
-"[-?\n@(#)$Id: basename (AT&T Research) 2010-05-06 $\n]"
+"[-?\n@(#)$Id: basename (ksh 93u+m) 2022-08-30 $\n]"
 "[--catalog?" ERROR_CATALOG "]"
 "[+NAME?basename - strip directory and suffix from filenames]"
 "[+DESCRIPTION?\bbasename\b removes all leading directory components "
@@ -42,7 +43,7 @@ static const char usage[] =
     "identical the end of \astring\a, these characters are removed. The "
     "characters not removed from \astring\a will be written on a single line "
     "to the standard output.]"
-"[a:all?All operands are treated as \astring\a and each modified "
+"[a:all|multiple?All operands are treated as \astring\a and each modified "
     "pathname is printed on a separate line on the standard output.]"
 "[s:suffix?All operands are treated as \astring\a and each modified "
     "pathname, with \asuffix\a removed if it exists, is printed on a "
@@ -62,10 +63,10 @@ static const char usage[] =
 
 #include <cmd.h>
 
-static void namebase(Sfio_t *outfile, register char *pathname, char *suffix)
+static void namebase(Sfio_t *outfile, char *pathname, char *suffix)
 {
-	register char *first, *last;
-	register int n=0;
+	char *first, *last;
+	int n=0;
 	for(first=last=pathname; *last; last++);
 	/* back over trailing '/' */
 	if(last>first)
@@ -95,7 +96,7 @@ static void namebase(Sfio_t *outfile, register char *pathname, char *suffix)
 }
 
 int
-b_basename(int argc, register char** argv, Shbltin_t* context)
+b_basename(int argc, char** argv, Shbltin_t* context)
 {
 	char*	string;
 	char*	suffix = 0;
@@ -126,7 +127,7 @@ b_basename(int argc, register char** argv, Shbltin_t* context)
 	argc -= opt_info.index;
 	if (error_info.errors || argc < 1 || !all && argc > 2)
 	{
-		error(ERROR_usage(2), "%s", optusage(NiL));
+		error(ERROR_usage(2), "%s", optusage(NULL));
 		UNREACHABLE();
 	}
 	if (!all)

@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1992-2013 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2024 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -13,11 +13,12 @@
 *                 Glenn Fowler <gsf@research.att.com>                  *
 *                  David Korn <dgk@research.att.com>                   *
 *                  Martijn Dekker <martijn@inlv.org>                   *
+*            Johnothan King <johnothanking@protonmail.com>             *
 *                                                                      *
 ***********************************************************************/
 
 static const char usage[] =
-"[-?\n@(#)pty (AT&T Research) 2013-05-22\n]"
+"[-?\n@(#)pty (ksh 93u+m) 2024-07-27\n]"
 "[-author?Glenn Fowler <gsf@research.att.com>]"
 "[-author?David Korn <dgk@research.att.com>]"
 "[-copyright?Copyright (c) 2001-2013 AT&T Intellectual Property]"
@@ -108,7 +109,6 @@ static const char usage[] =
 #include <proc.h>
 #include <ctype.h>
 #include <regex.h>
-#include <vmalloc.h>
 #include <ast_time.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -137,7 +137,7 @@ static noreturn void outofmemory(void)
 		strncpy(sname,name,sizeof(sname));
 		last = strrchr(sname,'/');
 		last[1] = 't';
-		return(sname);
+		return sname;
 	}
 #   endif
 
@@ -148,7 +148,7 @@ static noreturn void outofmemory(void)
 	if(!name)
 	{
 		strcpy(sname,_pty_first);
-		return(sname);
+		return sname;
 	}
 	n = strlen(_pty_first);
 	if(name[n-1]=='9')
@@ -159,15 +159,15 @@ static noreturn void outofmemory(void)
 		{
 			name[n-2]='0';
 			if(name[n-3]=='9' || name[n-3]=='z')
-				return(NULL);
+				return NULL;
 			name[n-3]++;
 		}
 		if(_pty_first[n-2]=='p' && (name[n-2]=='z' || name[n-2]=='Z'))
 		{
 			if(name[n-2]=='z')
-				name[n-2]=='P';
+				name[n-2]='P';
 			else
-				return(0);
+				return NULL;
 		}
 		else
 			name[n-2]++;
@@ -175,7 +175,7 @@ static noreturn void outofmemory(void)
 	}
 	else
 		name[n-1]++;
-	return(name);
+	return name;
     }
 #endif
 
@@ -184,7 +184,7 @@ static noreturn void outofmemory(void)
 	{
 		char *minion=0;
 #   if _lib__getpty
-		return(_getpty(master,O_RDWR,MODE_666,0));
+		return _getpty(master,O_RDWR,MODE_666,0);
 #   else
 #	if defined(_pty_clone)
 		*master = open(_pty_clone,O_RDWR|O_CREAT,MODE_666);
@@ -209,7 +209,7 @@ static noreturn void outofmemory(void)
 		}
 # 	endif
 #   endif
-		return(minion);
+		return minion;
 	}
 # endif
 #endif
@@ -317,12 +317,14 @@ mkpty(int* master, int* minion)
 		return -1;
 #endif
 #ifdef I_PUSH
-	struct termios	tst;
-	if (tcgetattr(*minion, &tst) < 0 && (ioctl(*minion, I_PUSH, "ptem") < 0 || ioctl(*minion, I_PUSH, "ldterm") < 0))
 	{
-		close(*minion);
-		close(*master);
-		return -1;
+		struct termios	tst;
+		if (tcgetattr(*minion, &tst) < 0 && (ioctl(*minion, I_PUSH, "ptem") < 0 || ioctl(*minion, I_PUSH, "ldterm") < 0))
+		{
+			close(*minion);
+			close(*master);
+			return -1;
+		}
 	}
 #endif
 #endif
@@ -360,7 +362,7 @@ runcmd(char** argv, int minion, int session)
 		ops[2] = PROC_FD_DUP(minion, 2, PROC_FD_CHILD);
 		ops[3] = 0;
 	}
-	return procopen(argv[0], argv, NiL, ops, 0);
+	return procopen(argv[0], argv, NULL, ops, 0);
 }
 
 /*
@@ -404,12 +406,12 @@ process(Sfio_t* mp, Sfio_t* lp, int delay, int timeout)
 		}
 		for (i = t = 0; i < n; i++)
 		{
-			if (!(sfvalue(sps[i]) & SF_READ))
+			if (!(sfvalue(sps[i]) & SFIO_READ))
 				/*skip*/;
 			else if (sps[i] == mp)
 			{
 				t++;
-				if (!(s = (char*)sfreserve(mp, SF_UNBOUND, -1)))
+				if (!(s = (char*)sfreserve(mp, SFIO_UNBOUND, -1)))
 				{
 					sfclose(mp);
 					mp = 0;
@@ -483,7 +485,7 @@ match(char* pattern, char* text, int must)
 		error(2, "%s: %s", pattern, buf);
 		return 0;
 	}
-	if (regexec(re, text, 0, NiL, 0))
+	if (regexec(re, text, 0, NULL, 0))
 	{
 		if (must)
 			error(2, "expected \"%s\", got \"%s\"", pattern, fmtesq(text, "\""));
@@ -494,19 +496,20 @@ match(char* pattern, char* text, int must)
 
 typedef struct Master_s
 {
-	Vmalloc_t*	vm;		/* allocation region			*/
 	char*		ignore;		/* ignore master lines matching this re	*/
 	char*		peek;		/* peek buffer pointer			*/
 	char*		cur;		/* current line				*/
 	char*		nxt;		/* next line				*/
 	char*		end;		/* end of lines				*/
 	char*		max;		/* end of buf				*/
+	char*		bufunderflow;	/* FIXME: kludge to cope with underflow	*/
 	char*		buf;		/* current buffer			*/
 	char*		prompt;		/* peek prompt				*/
 	int		cursor;		/* cursor in buf, 0 if fresh line	*/
 	int		line;		/* prompt line number			*/
 	int		restore;	/* previous line save char		*/
 } Master_t;
+#define BUFUNDERFLOW	128		/* bytes of buffer underflow to allow	*/
 
 /*
  * read one line from the master
@@ -522,7 +525,6 @@ masterline(Sfio_t* mp, Sfio_t* lp, char* prompt, int must, int timeout, Master_t
 	char*		s;
 	char*		t;
 	ssize_t		n;
-	ssize_t		a;
 	size_t		promptlen = 0;
 	ptrdiff_t	d;
 	char		promptbuf[64];
@@ -584,7 +586,7 @@ masterline(Sfio_t* mp, Sfio_t* lp, char* prompt, int must, int timeout, Master_t
 		}
 		goto done;
 	}
-	if ((n = sfpoll(&mp, 1, timeout)) <= 0 || !((int)sfvalue(mp) & SF_READ))
+	if ((n = sfpoll(&mp, 1, timeout)) <= 0 || !((int)sfvalue(mp) & SFIO_READ))
 	{
 		if (n < 0)
 		{
@@ -618,9 +620,9 @@ masterline(Sfio_t* mp, Sfio_t* lp, char* prompt, int must, int timeout, Master_t
 			errno = 0;
 			error(-1, "r EOF");
 		}
-		return 0;
+		return NULL;
 	}
-	if (!(s = sfreserve(mp, SF_UNBOUND, -1)))
+	if (!(s = sfreserve(mp, SFIO_UNBOUND, -1)))
 	{
 		if (!prompt)
 		{
@@ -643,17 +645,22 @@ masterline(Sfio_t* mp, Sfio_t* lp, char* prompt, int must, int timeout, Master_t
 				error(-1, "r EOF");
 			}
 		}
-		return 0;
+		return NULL;
 	}
 	n = sfvalue(mp);
 	error(-2, "b \"%s\"", fmtnesq(s, "\"", n));
 	if ((bp->max - bp->end) < n)
 	{
-		a = roundof(bp->max - bp->buf + n, SF_BUFSIZE);
+		size_t	old_buf_size, new_buf_size;
 		r = bp->buf;
-		if (!(bp->buf = vmnewof(bp->vm, bp->buf, char, a, 0)))
+		old_buf_size = bp->max - bp->buf + 1;
+		new_buf_size = roundof(old_buf_size + n, SFIO_BUFSIZE);
+		bp->bufunderflow = realloc(bp->bufunderflow, new_buf_size + BUFUNDERFLOW);
+		if (!bp->bufunderflow)
 			outofmemory();
-		bp->max = bp->buf + a;
+		bp->buf = bp->bufunderflow + BUFUNDERFLOW;
+		memset(bp->buf + old_buf_size, 0, new_buf_size - old_buf_size);
+		bp->max = bp->buf + new_buf_size - 1;
 		if (bp->buf != r)
 		{
 			d = bp->buf - r;
@@ -692,7 +699,9 @@ masterline(Sfio_t* mp, Sfio_t* lp, char* prompt, int must, int timeout, Master_t
 	s = r;
 	if (bp->cursor)
 	{
-		r -= bp->cursor;
+		r -= bp->cursor; /* FIXME: r may now be before bp->buf */
+		if (r < bp->bufunderflow)
+			error(ERROR_PANIC, "pty.c:%d: internal error: r is %d bytes before bp->bufunderflow", __LINE__, bp->bufunderflow - r);
 		bp->cursor = 0;
 	}
 	for (t = 0, n = 0; *s; s++)
@@ -778,20 +787,18 @@ dialogue(Sfio_t* mp, Sfio_t* lp, int delay, int timeout)
 	char*		m;
 	char*		e;
 	char*		id;
-	Vmalloc_t*	vm;
 	Cond_t*		cond;
 	Master_t*	master;
 
 	int		status = 0;
 
-	if (!(vm = vmopen(Vmdcheap, Vmbest, 0)) ||
-	    !(cond = vmnewof(vm, 0, Cond_t, 1, 0)) ||
-	    !(master = vmnewof(vm, 0, Master_t, 1, 0)) ||
-	    !(master->buf = vmnewof(vm, 0, char, 2 * SF_BUFSIZE, 0)))
+	if (!(cond = calloc(1, sizeof(*cond))) ||
+	    !(master = calloc(1, sizeof(*master))) ||
+	    !(master->bufunderflow = calloc(2 * SFIO_BUFSIZE + BUFUNDERFLOW, sizeof(char))))
 		outofmemory();
-	master->vm = vm;
+	master->buf = master->bufunderflow + BUFUNDERFLOW;
 	master->cur = master->end = master->buf;
-	master->max = master->buf + 2 * SF_BUFSIZE - 1;
+	master->max = master->buf + 2 * SFIO_BUFSIZE - 1;
 	master->restore = -1;
 	errno = 0;
 	id = error_info.id;
@@ -838,7 +845,7 @@ dialogue(Sfio_t* mp, Sfio_t* lp, int delay, int timeout)
 				error(2, "%s: invalid delay -- milliseconds expected", s);
 			break;
 		case 'i':
-			if (!cond->next && !(cond->next = vmnewof(vm, 0, Cond_t, 1, 0)))
+			if (!cond->next && !(cond->next = calloc(1, sizeof(Cond_t))))
 				outofmemory();
 			cond = cond->next;
 			cond->flags = IF;
@@ -943,38 +950,29 @@ dialogue(Sfio_t* mp, Sfio_t* lp, int delay, int timeout)
 		case 'I':
 			if (master->ignore)
 			{
-				vmfree(vm, master->ignore);
+				free(master->ignore);
 				master->ignore = 0;
 			}
-			if (*s && !(master->ignore = vmstrdup(vm, s)))
-			{
-				error(ERROR_SYSTEM|2, "out of memory");
-				goto done;
-			}
+			if (*s && !(master->ignore = strdup(s)))
+				outofmemory();
 			break;
 		case 'L':
 			if (error_info.id)
 			{
-				vmfree(vm, error_info.id);
+				free(error_info.id);
 				error_info.id = 0;
 			}
-			if (*s && !(error_info.id = vmstrdup(vm, s)))
-			{
-				error(ERROR_SYSTEM|2, "out of memory");
-				goto done;
-			}
+			if (*s && !(error_info.id = strdup(s)))
+				outofmemory();
 			break;
 		case 'P':
 			if (master->prompt)
 			{
-				vmfree(vm, master->prompt);
+				free(master->prompt);
 				master->prompt = 0;
 			}
-			if (*s && !(master->prompt = vmstrdup(vm, s)))
-			{
-				error(ERROR_SYSTEM|2, "out of memory");
-				goto done;
-			}
+			if (*s && !(master->prompt = strdup(s)))
+				outofmemory();
 			break;
 		default:
 			if (cond->flags & SKIP)
@@ -990,8 +988,6 @@ dialogue(Sfio_t* mp, Sfio_t* lp, int delay, int timeout)
 		sfclose(mp);
 	error_info.id = id;
 	error_info.line = line;
-	if (vm)
-		vmclose(vm);
 	return status ? status : error_info.errors != 0;
 }
 
@@ -1074,7 +1070,7 @@ b_pty(int argc, char** argv, Shbltin_t* context)
 		error(ERROR_system(1), "unable to create pty");
 		UNREACHABLE();
 	}
-	if (!(mp = sfnew(NiL, 0, SF_UNBOUND, master, SF_READ|SF_WRITE)))
+	if (!(mp = sfnew(NULL, 0, SFIO_UNBOUND, master, SFIO_READ|SFIO_WRITE)))
 	{
 		error(ERROR_system(1), "cannot open master stream");
 		UNREACHABLE();
@@ -1105,7 +1101,7 @@ b_pty(int argc, char** argv, Shbltin_t* context)
 	}
 	if (!log)
 		lp = 0;
-	else if (!(lp = sfopen(NiL, log, "w")))
+	else if (!(lp = sfopen(NULL, log, "w")))
 	{
 		error(ERROR_system(1), "%s: cannot write", log);
 		UNREACHABLE();
