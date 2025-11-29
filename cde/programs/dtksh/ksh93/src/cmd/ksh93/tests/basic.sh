@@ -2,7 +2,7 @@
 #                                                                      #
 #               This software is part of the ast package               #
 #          Copyright (c) 1982-2012 AT&T Intellectual Property          #
-#          Copyright (c) 2020-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2020-2024 Contributors to ksh 93u+m           #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
 #                                                                      #
@@ -13,6 +13,8 @@
 #                  David Korn <dgk@research.att.com>                   #
 #                  Martijn Dekker <martijn@inlv.org>                   #
 #            Johnothan King <johnothanking@protonmail.com>             #
+#                   Marc Wilson <posguy99@gmail.com>                   #
+#                  Lev Kujawski <int21h@mailbox.org>                   #
 #                                                                      #
 ########################################################################
 
@@ -131,10 +133,10 @@ eval $bar
 if	[[ $foo != 'foo bar' ]]
 then	err_exit 'eval foo=\$bar, with bar="foo\ bar" not working'
 fi
-cd /tmp
-cd ../../tmp || err_exit "cd ../../tmp failed"
-if	[[ $PWD != /tmp ]]
-then	err_exit 'cd ../../tmp is not /tmp'
+cd /dev
+cd ../../dev || err_exit "cd ../../dev failed"
+if	[[ $PWD != /dev ]]
+then	err_exit 'cd ../../dev is not /dev'
 fi
 ( sleep .2; cat <<!
 foobar
@@ -455,9 +457,9 @@ s=SECONDS
 set -o pipefail
 for ((i=0; i < 30; i++))
 do	print hello
-	sleep .01
-done |  "$binsleep" .1
-(( (SECONDS-s) < .2 )) || err_exit 'early termination not causing broken pipe'
+	sleep .02
+done |  "$binsleep" .2
+(( (SECONDS-s) < .4 )) || err_exit 'early termination not causing broken pipe'
 
 got=$({ trap 'print trap' 0; print -n | "$bincat"; } & wait "$!")
 [[ $got == trap ]] || err_exit "trap on exit not correctly triggered (expected 'trap', got $(printf %q "$got"))"
@@ -978,6 +980,7 @@ do
 	|| err_exit "last command in forked comsub exec-optimized in spite of $sig trap ($pid1 == $pid2)"
 
 	cat >script <<-EOF
+	trap + $sig  # unignore
 	trap ":" $sig
 	echo \$\$
 	sh -c 'echo \$\$'
@@ -987,6 +990,31 @@ do
 	{ read pid1 && read pid2; } <out && let "pid1 != pid2" \
 	|| err_exit "last command in script exec-optimized in spite of $sig trap ($pid1 == $pid2)"
 done
+
+# ======
+# Nested compound assignment misparsed in $(...) or ${ ...; } command substitution
+# https://github.com/ksh93/ksh/issues/269
+for testcode in \
+	': $( typeset -a arr=((a b c) 1) )' \
+	': ${ typeset -a arr=((a b c) 1); }' \
+	': $( typeset -a arr=( ( ((a b c)1))) )' \
+	': ${ typeset -a arr=( ( ((a b c)1))); }' \
+	': $(( 1 << 2 ))' \
+	': $(: $(( 1 << 2 )) )' \
+	': $( (( 1 << 2 )) )' \
+	': $( : $( (( 1 << 2 )) ) )' \
+	': $( (( $( (( 1 << 2 )); echo 1 ) << 2 )) )' \
+	': $( typeset -a arr=((a $(( 1 << 2 )) c) 1) )' \
+	'typeset -Ca arr=((a=ah b=beh c=si))' \
+	': $( typeset -Ca arr=((a=ah b=beh c=si)) )' \
+	'r=${ typeset -Ca arr=((a=ah b=beh c=si)); }' \
+	': $( typeset -a arr=((a $(( $( typeset -a barr=((a $(( 1 << 2 )) c) 1); echo 1 ) << $( typeset -a bazz=((a $(( 1 << 2 )) c) 1); echo 2 ) )) c) 1) )' \
+	'r=$(typeset -C arr=( (a=ah b=beh c=si) 1 (e f g)));'
+do
+	got=$(export testcode; "$SHELL" -c 'v=$(eval "$testcode" 2>&1); e=$?; print -r -- "$v"; exit $e' 2>&1) \
+	|| { e=$?; err_exit "comsub/arithexp lexing test $(printf %q "$testcode"): got status $e and $(printf %q "$got")"; }
+done
+unset testcode
 
 # ======
 exit $((Errors<125?Errors:125))

@@ -2,7 +2,7 @@
 #                                                                      #
 #               This software is part of the ast package               #
 #          Copyright (c) 1982-2012 AT&T Intellectual Property          #
-#          Copyright (c) 2020-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2020-2024 Contributors to ksh 93u+m           #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
 #                                                                      #
@@ -532,8 +532,7 @@ x=$( { time $SHELL -c date >| /dev/null;} 2>&1)
 [[ $x == *real*user*sys* ]] || err_exit 'time { ...;} 2>&1 in $(...) fails'
 
 x=$($SHELL -c '( function fx { export X=123;  } ; fx; ); echo $X')
-[[ $x == 123 ]] && err_exit 'global variables set from with functions inside a
-subshell can leave side effects in parent shell'
+[[ $x == 123 ]] && err_exit 'global variables set within functions inside a subshell can leave side effects in parent shell'
 
 date=$(whence -p date)
 err() { return $1; }
@@ -625,7 +624,7 @@ trap - USR1 ERR
 dot=$(cat <<-EOF
 		$(ls -d .)
 	EOF
-) ) & sleep 1
+) ) & sleep .1
 if      kill -0 $! 2> /dev/null
 then    err_exit  'command substitution containing here-doc with command substitution fails'
 fi
@@ -852,6 +851,7 @@ actual=$(export bincat binecho; "$SHELL" 2>&1 -c \
 # ======
 # Crash in job handling code when running backtick-style command substitutions (rhbz#825520)
 # The regression sometimes doesn't just crash, but freezes hard, so requires special handling.
+if((!SHOPT_SCRIPTONLY));then
 cat >$tmp/backtick_crash.ksh <<'EOF'
 binfalse=$(whence -p false) || exit
 for ((i=0; i<250; i++))
@@ -860,11 +860,12 @@ done
 EOF
 "$SHELL" -i "$tmp/backtick_crash.ksh" 2>/dev/null &	# run test as bg job
 test_pid=$!
-(sleep 10; kill -s KILL "$test_pid" 2>/dev/null) &	# another bg job to kill frozen test job
+(sleep 40; kill -s KILL "$test_pid" 2>/dev/null) &	# another bg job to kill frozen test job
 sleep_pid=$!
 { wait "$test_pid"; } 2>/dev/null			# get job's exit status, suppressing signal messages
 ((!(e = $?))) || err_exit "backtick comsub crash/freeze (got status $e$( ((e>128)) && print -n /SIG && kill -l "$e"))"
 kill "$sleep_pid" 2>/dev/null
+fi # !SHOPT_SCRIPTONLY
 
 # ======
 # Backtick command substitution hangs when filling out pipe buffer (rhbz#1062296)
@@ -1181,6 +1182,42 @@ exp='some output'
 { got=$(eval 'print -r -- "$exp" | "$bincat"'); } >/dev/null
 [[ $got == "$exp" ]] || err_exit 'command substitution did not catch output' \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+
+# ======
+# Command substitution hangs when redirecting standard output in combination with other redirections
+# Bug introduced in 93u+m/1.0.0-beta.2
+"$SHELL" -c '{ v=$(redirect 2>&1 1>&9); } 9>&1' &
+test_pid=$!
+(sleep 2; kill -s KILL "$test_pid" 2>/dev/null) &
+sleep_pid=$!
+{ wait "$test_pid"; } 2>/dev/null
+((!(e = $?))) || err_exit "comsub hangs on redirecting stdout & more" \
+	"(got status $e$( ((e>128)) && print -n /SIG && kill -l "$e"))"
+kill "$sleep_pid" 2>/dev/null
+
+# ======
+unset x
+exp=$'1\nx= 2'
+got=$(
+	((.sh.version <= 20210430)) && ulimit -c 0  # fork to stop 'exec' from ending whole script (see commit 88a1f3d6)
+	echo 1
+	( x=${ sh() { echo BADFUN; }; foo=BADOUTPUT exec sh -c 'echo $foo'; echo BADEXEC; } )
+	echo x=$x 2
+)
+[[ $got == "$exp" ]] || err_exit "incorrect result from 'exec' in subshare in subshell" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+
+# ======
+# return from a function in a pipe within a comsub could incorrectly trigger signal (race condition)
+# bug introduced on 2022-07-02
+exp='exited 9'
+got=$("$SHELL" -c 'x=$(fn(){ return 9; };echo ok|fn); echo exited $?' 2>&1)
+[[ e=$? -eq 0 && $got == "$exp" ]] || err_exit "regression involving SIGPIPE in subshell" \
+	"(expected status 0 and $(printf %q "$exp"), got status $e and $(printf %q "$got"))"
+# a status > 255 is trimmed to 8 bits when exiting a subshell (comsub included)
+got=$("$SHELL" -c 'x=$(fn(){ return 265; };echo ok|fn); echo exited $?' 2>&1)
+[[ e=$? -eq 0 && $got == "$exp" ]] || err_exit "regression involving SIGPIPE in subshell" \
+	"(expected status 0 and $(printf %q "$exp"), got status $e and $(printf %q "$got"))"
 
 # ======
 exit $((Errors<125?Errors:125))

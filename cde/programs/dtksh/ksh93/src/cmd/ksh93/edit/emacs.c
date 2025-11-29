@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2024 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -60,17 +60,19 @@ One line screen editor for any program
  */
 
 #include	"shopt.h"
+#include	<ast.h>
 
 #if SHOPT_ESH
 
-#include	<ast.h>
 #include	<releaseflags.h>
-#include	"FEATURE/cmds"
 #include	"defs.h"
 #include	"io.h"
 #include	"history.h"
 #include	"edit.h"
 #include	"terminal.h"
+#if SHOPT_MULTIBYTE
+#include	<wctype.h>
+#endif /* SHOPT_MULTIBYTE */
 
 #define ESH_NFIRST
 #define ESH_KAPPEND
@@ -79,7 +81,6 @@ One line screen editor for any program
 #undef putchar
 #define putchar(ed,c)	ed_putchar(ed,c)
 #define beep()		ed_ringbell()
-
 
 #if SHOPT_MULTIBYTE
 #   define gencpy(a,b)	ed_gencpy(a,b)
@@ -111,6 +112,7 @@ typedef struct _emacs_
 	char	scvalid;	/* Screen is up to date */
 	char	lastdraw;	/* last update type */
 	int	offset;		/* Screen offset */
+	char	ehist;		/* hist handling required */
 	enum
 	{
 		CRT=0,	/* Crt terminal */
@@ -169,20 +171,20 @@ typedef enum
 
 static void draw(Emacs_t*,Draw_t);
 static int escape(Emacs_t*,genchar*, int);
-static void putstring(Emacs_t*,char*);
 static void search(Emacs_t*,genchar*,int);
 static void setcursor(Emacs_t*,int, int);
 static void show_info(Emacs_t*,const char*);
 static void xcommands(Emacs_t*,int);
+static char blankline(Emacs_t*, genchar*);
 
 int ed_emacsread(void *context, int fd,char *buff,int scend, int reedit)
 {
 	Edit_t *ed = (Edit_t*)context;
-	register int c;
-	register int i;
-	register genchar *out;
-	register int count;
-	register Emacs_t *ep = ed->e_emacs;
+	int c;
+	int i;
+	genchar *out;
+	int count;
+	Emacs_t *ep = ed->e_emacs;
 	int adjust,oadjust;
 	int vt220_save_repeat = 0;
 	char backslash;
@@ -200,9 +202,10 @@ int ed_emacsread(void *context, int fd,char *buff,int scend, int reedit)
 	Prompt = prompt;
 	ep->screen = Screen;
 	ep->lastdraw = FINAL;
+	ep->ehist = 0;
 	if(tty_raw(ERRIO,0) < 0)
 	{
-		 return(reedit?reedit:ed_read(context, fd,buff,scend,0));
+		 return reedit ? reedit : ed_read(context,fd,buff,scend,0);
 	}
 	raw = 1;
 	/* This mess in case the read system call fails */
@@ -246,9 +249,9 @@ int ed_emacsread(void *context, int fd,char *buff,int scend, int reedit)
 		tty_cooked(ERRIO);
 		if (i == UEOF)
 		{
-			return(0); /* EOF */
+			return 0; /* EOF */
 		}
-		return(-1); /* some other error */
+		return -1; /* some other error */
 	}
 	out[reedit] = 0;
 	if(scend+plen > (MAXLINE-2))
@@ -343,7 +346,7 @@ int ed_emacsread(void *context, int fd,char *buff,int scend, int reedit)
 		case EOFCHAR:
 			ed_flush(ep->ed);
 			tty_cooked(ERRIO);
-			return(0);
+			return 0;
 #ifdef u370
 		case cntl('S') :
 		case cntl('Q') :
@@ -365,8 +368,11 @@ int ed_emacsread(void *context, int fd,char *buff,int scend, int reedit)
 				}
 				ep->ed->e_tabcount = 0;
 			}
-			beep();
-			continue;
+			if(sh.nextprompt)
+			{
+				beep();
+				continue;
+			}
 		do_default_processing:
 		default:
 
@@ -592,7 +598,7 @@ update:
 				if (ep->terminal == PAPER)
 				{
 					putchar(ep->ed,'\n');
-					putstring(ep,Prompt);
+					ed_putstring(ep->ed,Prompt);
 				}
 				c = ed_getchar(ep->ed,0);
 				if (c != usrkill)
@@ -606,7 +612,7 @@ update:
 				{
 					ep->terminal = PAPER;
 					putchar(ep->ed,'\n');
-					putstring(ep,Prompt);
+					ed_putstring(ep->ed,Prompt);
 				}
 			}
 			continue;
@@ -652,9 +658,7 @@ update:
 			{
 				hline = hismin+1;
 				beep();
-#ifndef ESH_NFIRST
 				continue;
-#endif
 			}
 			goto common;
 
@@ -712,6 +716,11 @@ update:
 			eol = genlen(out);
 			cur = eol;
 			draw(ep,UPDATE);
+			/* skip blank lines when going up/down in history */
+			if(c==cntl('N') && hline != histlines && blankline(ep,out))
+				ed_ungetchar(ep->ed,cntl('N'));
+			else if(c==cntl('P') && hline != hismin && blankline(ep,out))
+				ed_ungetchar(ep->ed,cntl('P'));
 			continue;
 		}
 	}
@@ -722,11 +731,15 @@ process:
 		beep();
 		*out = '\0';
 	}
-	draw(ep,FINAL);
+	/* ep->ehist: do not print the literal hist command after ^X^E. */
+	if (!ep->ehist)
+		draw(ep,FINAL);
+	else
+		ep->ehist = 0;
 	tty_cooked(ERRIO);
 	if(ed->e_nlist)
 		ed->e_nlist = 0;
-	stakset(ed->e_stkptr,ed->e_stkoff);
+	stkset(sh.stk,ed->e_stkptr,ed->e_stkoff);
 	if(c == '\n')
 	{
 		out[eol++] = '\n';
@@ -739,14 +752,14 @@ process:
 #endif /* SHOPT_MULTIBYTE */
 	i = (int)strlen(buff);
 	if (i)
-		return(i);
-	return(-1);
+		return i;
+	return -1;
 }
 
 static void show_info(Emacs_t *ep,const char *str)
 {
-	register genchar *out = drawbuff;
-	register int c;
+	genchar *out = drawbuff;
+	int c;
 	genchar string[LBUF];
 	int sav_cur = cur;
 	/* save current line */
@@ -768,18 +781,10 @@ static void show_info(Emacs_t *ep,const char *str)
 	draw(ep,UPDATE);
 }
 
-static void putstring(Emacs_t* ep,register char *sp)
+static int escape(Emacs_t* ep,genchar *out,int count)
 {
-	register int c;
-	while (c= *sp++)
-		 putchar(ep->ed,c);
-}
-
-
-static int escape(register Emacs_t* ep,register genchar *out,int count)
-{
-	register int i,value;
-	int digit,ch,c,d;
+	int i,value;
+	int digit,ch,c,d,savecur;
 	digit = 0;
 	value = 0;
 	while ((i=ed_getchar(ep->ed,0)),digit(i))
@@ -794,7 +799,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 #ifdef ESH_KAPPEND
 		++killing;		/* don't modify killing signal */
 #endif
-		return(value);
+		return value;
 	}
 	value = count;
 	if(value<0)
@@ -803,10 +808,10 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 	{
 		case cntl('V'):
 			show_info(ep,fmtident(e_version));
-			return(-1);
+			return -1;
 		case ' ':
 			ep->mark = cur;
-			return(-1);
+			return -1;
 
 #ifdef ESH_KAPPEND
 		case '+':		/* M-+ = append next kill */
@@ -820,7 +825,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 #ifdef ESH_KAPPEND
 			killing = 0;	/* start fresh */
 #endif
-			return(-1);
+			return -1;
 
 		case 'l':	/* M-l == lowercase */
 		case 'd':	/* M-d == delete word */
@@ -854,7 +859,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 					cur++;
 				}
 				draw(ep,UPDATE);
-				return(-1);
+				return -1;
 			}
 
 			else if(ch=='f')
@@ -862,7 +867,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 			else if(ch=='c')
 			{
 				ed_ungetchar(ep->ed,cntl('C'));
-				return(i-cur);
+				return i-cur;
 			}
 			else
 			{
@@ -872,10 +877,10 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 #ifdef ESH_KAPPEND
 					++killing;	/* keep killing signal */
 #endif
-					return(i-cur);
+					return i-cur;
 				}
 				beep();
-				return(-1);
+				return -1;
 			}
 		}
 		
@@ -902,7 +907,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 #ifdef ESH_KAPPEND
 				++killing;
 #endif
-				return(cur-i);
+				return cur-i;
 			}
 		}
 		
@@ -923,7 +928,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 			hline = histlines-1;
 			hloff = 0;
 #endif /* ESH_NFIRST */
-			return(0);
+			return 0;
 		
 		case '<':
 			ed_ungetchar(ep->ed,cntl('P'));
@@ -932,7 +937,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 			hline = hismin + 1;
 			return 0;
 #else
-			return(hline-hismin);
+			return hline-hismin;
 #endif /* ESH_NFIRST */
 
 
@@ -940,7 +945,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 			ed_ungetchar(ep->ed,'\n');
 			ed_ungetchar(ep->ed,(out[0]=='#')?cntl('D'):'#');
 			ed_ungetchar(ep->ed,cntl('A'));
-			return(-1);
+			return -1;
 		case '_' :
 		case '.' :
 		{
@@ -956,7 +961,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 			if ((eol - cur) >= sizeof(name))
 			{
 				beep();
-				return(-1);
+				return -1;
 			}
 			ep->mark = cur;
 			gencpy(name,&out[cur]);
@@ -967,7 +972,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 			}
 			gencpy(&out[cur],name);
 			draw(ep,UPDATE);
-			return(-1);
+			return -1;
 		}
 
 #if SHOPT_EDPREDICT
@@ -1003,37 +1008,32 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 		case '*':		/* filename expansion */
 		case '=':	/* escape = - list all matching file names */
 		{
-			char allempty = 1;
-			int x;
-			ep->mark = cur;
-			for(x=0; x < cur; x++)
-			{
-				if(!isspace(out[x]))
-				{
-					allempty = 0;
-					break;
-				}
-			}
-			if(cur<1 || allempty)
+			if(cur<1 || blankline(ep,out))
 			{
 				beep();
-				return(-1);
+				return -1;
 			}
+			savecur = cur;
+			while(isword(cur))
+				cur++;
 			ch = i;
 			if(i=='\\' && out[cur-1]=='/')
 				i = '=';
 			if(ed_expand(ep->ed,(char*)out,&cur,&eol,ch,count) < 0)
 			{
+				cur = savecur;
 				if(ep->ed->e_tabcount==1)
 				{
 					ep->ed->e_tabcount=2;
 					ed_ungetchar(ep->ed,'\t');
-					return(-1);
+					return -1;
 				}
 				beep();
 			}
 			else if(i=='=' || (i=='\\' && out[cur-1]=='/'))
 			{
+				if(ch == '=' && count == -1 && ep->ed->e_nlist > 1)
+					cur = savecur;
 				draw(ep,REFRESH);
 				if(count>0 || i=='\\')
 					ep->ed->e_tabcount=0;
@@ -1051,7 +1051,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 					ep->ed->e_tabcount=0;
 				draw(ep,UPDATE);
 			}
-			return(-1);
+			return -1;
 		}
 
 		/* search back for character */
@@ -1061,7 +1061,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 			if ((value == 0) || (value > eol))
 			{
 				beep();
-				return(-1);
+				return -1;
 			}
 			i = cur;
 			if (i > 0)
@@ -1084,13 +1084,20 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 		update:
 			cur = i;
 			draw(ep,UPDATE);
-			return(-1);
-#ifdef _pth_tput
+			return -1;
 		case cntl('L'): /* clear screen */
-			system(_pth_tput " clear");
+		{
+			Shopt_t	o = sh.options;
+			sigblock(SIGINT);
+			sh_offoption(SH_RESTRICTED);
+			sh_offoption(SH_VERBOSE);
+			sh_offoption(SH_XTRACE);
+			sh_trap("\\command -p tput clear 2>/dev/null",0);
+			sh.options = o;
+			sigrelease(SIGINT);
 			draw(ep,REFRESH);
-			return(-1);
-#endif
+			return -1;
+		}
 		case '[':	/* feature not in book */
 		case 'O':	/* after running top <ESC>O instead of <ESC>[ */
 			switch(i=ed_getchar(ep->ed,1))
@@ -1118,33 +1125,33 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 					{
 						ed_ungetchar(ep->ed,'\r');
 						ed_ungetchar(ep->ed,cntl('R'));
-						return(-1);
+						return -1;
 					}
 				}
 				*lstring = 0;
 				ed_ungetchar(ep->ed,cntl('P'));
-				return(-1);
+				return -1;
 			    case 'B':
 				/* VT220 down arrow */
 				ed_ungetchar(ep->ed,cntl('N'));
-				return(-1);
+				return -1;
 			    case 'C':
 				/* VT220 right arrow */
 				ed_ungetchar(ep->ed,cntl('F'));
-				return(-1);
+				return -1;
 			    case 'D':
 				/* VT220 left arrow */
 				ed_ungetchar(ep->ed,cntl('B'));
-				return(-1);
+				return -1;
 			    case 'H':
 				/* VT220 Home key */
 				ed_ungetchar(ep->ed,cntl('A'));
-				return(-1);
+				return -1;
 			    case 'F':
 			    case 'Y':
 				/* VT220 End key */
 				ed_ungetchar(ep->ed,cntl('E'));
-				return(-1);
+				return -1;
 			    case '1':
 			    case '7':
 				/*
@@ -1155,7 +1162,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 				if(ch == '~')
 				{ /* Home key */
 					ed_ungetchar(ep->ed,cntl('A'));
-					return(-1);
+					return -1;
 				}
 				else if(i == '1' && ch == ';')
 				{
@@ -1178,17 +1185,17 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 				}
 				ed_ungetchar(ep->ed,ch);
 				ed_ungetchar(ep->ed,i);
-				return(-1);
+				return -1;
 			    case '2': /* Insert key */
 				ch = ed_getchar(ep->ed,1);
 				if(ch == '~')
 				{
 					ed_ungetchar(ep->ed, cntl('V'));
-					return(-1);
+					return -1;
 				}
 				ed_ungetchar(ep->ed,ch);
 				ed_ungetchar(ep->ed,i);
-				return(-1);
+				return -1;
 			    case '3':
 				ch = ed_getchar(ep->ed,1);
 				if(ch == '~')
@@ -1200,7 +1207,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 					 */
 					if(cur < eol)
 						ed_ungetchar(ep->ed,ERASECHAR);
-					return(-1);
+					return -1;
 				}
 				else if(ch == ';')
 				{
@@ -1220,7 +1227,7 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 				}
 				ed_ungetchar(ep->ed,ch);
 				ed_ungetchar(ep->ed,i);
-				return(-1);
+				return -1;
 			    case '5':  /* Haiku terminal Ctrl-Arrow key */
 				ch = ed_getchar(ep->ed,1);
 				switch(ch)
@@ -1234,14 +1241,15 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 				}
 				ed_ungetchar(ep->ed,ch);
 				ed_ungetchar(ep->ed,i);
-				return(-1);
+				return -1;
 			    case '4':
 			    case '8': /* rxvt */
 				ch = ed_getchar(ep->ed,1);
 				if(ch == '~')
 				{
-					ed_ungetchar(ep->ed,cntl('E')); /* End key */
-					return(-1);
+					/* End key */
+					ed_ungetchar(ep->ed,cntl('E'));
+					return -1;
 				}
 				ed_ungetchar(ep->ed,ch);
 				/* FALLTHROUGH */
@@ -1255,14 +1263,14 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
 			/* look for user defined macro definitions */
 			if(ed_macro(ep->ed,i))
 #   ifdef ESH_BETTER
-				return(count);	/* pass argument to macro */
+				return count;	/* pass argument to macro */
 #   else
-				return(-1);
+				return -1;
 #   endif /* ESH_BETTER */
 			beep();
 			/* FALLTHROUGH */
 	}
-	return(-1);
+	return -1;
 }
 
 
@@ -1270,9 +1278,9 @@ static int escape(register Emacs_t* ep,register genchar *out,int count)
  * This routine process all commands starting with ^X
  */
 
-static void xcommands(register Emacs_t *ep,int count)
+static void xcommands(Emacs_t *ep,int count)
 {
-        register int i = ed_getchar(ep->ed,0);
+        int i = ed_getchar(ep->ed,0);
 	NOT_USED(count);
         switch(i)
         {
@@ -1287,8 +1295,39 @@ static void xcommands(register Emacs_t *ep,int count)
 
 #ifdef ESH_BETTER
                 case cntl('E'):	/* invoke emacs on current command */
+			if(eol>=0 && sh.hist_ptr)
+			{
+				if(blankline(ep,drawbuff))
+				{
+					cur = 0;
+					eol = 1;
+					drawbuff[cur] = '\n';
+					drawbuff[eol] = '\0';
+				}
+				else
+				{
+					drawbuff[eol] = '\n';
+					drawbuff[eol+1] = '\0';
+				}
+			}
+			/* If hist_eof is not used here, activity in a
+			 * separate session could result in the wrong
+			 * line being edited. */
+			if(hline == histlines && sh.hist_ptr)
+			{
+				hist_eof(sh.hist_ptr);
+				histlines = (int)sh.hist_ptr->histind;
+				hline = histlines;
+				if(histlines >= sh.hist_ptr->histsize)
+					hist_flush(sh.hist_ptr);
+			}
+			/* Do not print the literal hist command. */
+			ep->ehist = 1;
 			if(ed_fulledit(ep->ed)==-1)
+			{
+				ep->ehist = 0;
 				beep();
+			}
 			else
 			{
 #if SHOPT_MULTIBYTE
@@ -1298,7 +1337,7 @@ static void xcommands(register Emacs_t *ep,int count)
 			}
 			return;
 
-#	define itos(i)	fmtbase((intmax_t)(i),0,0)	/* want signed conversion */
+#	define itos(i)	fmtint(i,0)	/* want signed conversion */
 
 		case cntl('H'):		/* ^X^H show history info */
 			{
@@ -1357,28 +1396,35 @@ static void xcommands(register Emacs_t *ep,int count)
 	}
 }
 
+
+/*
+ * This function is used to perform reverse searches.
+ */
+
 static void search(Emacs_t* ep,genchar *out,int direction)
 {
 #ifndef ESH_NFIRST
 	Histloc_t location;
 #endif
-	register int i,sl;
+	int i,sl;
 	genchar str_buff[LBUF];
-	register genchar *string = drawbuff;
+	genchar *string = drawbuff;
 	/* save current line */
 	int sav_cur = cur;
 	genncpy(str_buff,string,sizeof(str_buff)/sizeof(*str_buff));
 	string[0] = '^';
 	string[1] = 'R';
-	string[2] = '\0';
-	sl = 2;
+	string[2] = ':';
+	string[3] = ' ';
+	string[4] = '\0';
+	sl = 4;
 	cur = sl;
 	draw(ep,UPDATE);
 	while ((i = ed_getchar(ep->ed,1))&&(i != '\r')&&(i != '\n'))
 	{
 		if (i==usrerase || i==DELETE || i=='\b' || i==ERASECHAR)
 		{
-			if (sl > 2)
+			if (sl > 4)
 			{
 				string[--sl] = '\0';
 				cur = sl;
@@ -1425,7 +1471,7 @@ static void search(Emacs_t* ep,genchar *out,int direction)
 	}
 	skip:
 	i = genlen(string);
-	if(ep->prevdirection == -2 && i!=2 || direction!=1)
+	if(ep->prevdirection == -2 && i!=4 || direction!=1)
 		ep->prevdirection = -1;
 	if (direction < 1)
 	{
@@ -1434,12 +1480,12 @@ static void search(Emacs_t* ep,genchar *out,int direction)
 	}
 	else
 		direction = -1;
-	if (i != 2)
+	if (i != 4)
 	{
 #if SHOPT_MULTIBYTE
 		ed_external(string,(char*)string);
 #endif /* SHOPT_MULTIBYTE */
-		strncopy(lstring,((char*)string)+2,SEARCHSIZE-1);
+		strncopy(lstring,((char*)string)+4,SEARCHSIZE-1);
 		lstring[SEARCHSIZE-1] = 0;
 		ep->prevdirection = direction;
 	}
@@ -1483,21 +1529,21 @@ restore:
 /* If 'first' assume screen is blank */
 /* Prompt is always kept on the screen */
 
-static void draw(register Emacs_t *ep,Draw_t option)
+static void draw(Emacs_t *ep,Draw_t option)
 {
 #define	NORMAL ' '
 #define	LOWER  '<'
 #define	BOTH   '*'
 #define	UPPER  '>'
 
-	register genchar *sptr;		/* Pointer within screen */
+	genchar *sptr;			/* Pointer within screen */
 	genchar nscreen[2*MAXLINE];	/* New entire screen */
 	genchar *ncursor;		/* New cursor */
-	register genchar *nptr;		/* Pointer to New screen */
+	genchar *nptr;			/* Pointer to New screen */
 	char  longline;			/* Line overflow */
 	genchar *logcursor;
 	genchar *nscend;		/* end of logical screen */
-	register int i;
+	int i;
 	
 	nptr = nscreen;
 	sptr = drawbuff;
@@ -1517,7 +1563,7 @@ static void draw(register Emacs_t *ep,Draw_t option)
 			return;
 		}
 		*ep->cursor = '\0';
-		putstring(ep,Prompt);	/* start with prompt */
+		ed_putstring(ep->ed,Prompt);	/* start with prompt */
 	}
 	
 	/*********************
@@ -1696,9 +1742,9 @@ void emacs_redraw(void *vp)
  * cursor is set to reflect the change
  */
 
-static void setcursor(register Emacs_t *ep,register int newp,int c)
+static void setcursor(Emacs_t *ep,int newp,int c)
 {
-	register int oldp = ep->cursor - ep->screen;
+	int oldp = ep->cursor - ep->screen;
 	newp  = ed_setcursor(ep->ed, ep->screen, oldp, newp, 0);
 	if(c)
 	{
@@ -1710,15 +1756,36 @@ static void setcursor(register Emacs_t *ep,register int newp,int c)
 }
 
 #if SHOPT_MULTIBYTE
-static int print(register int c)
+static int print(int c)
 {
-	return((c&~STRIP)==0 && isprint(c));
+	return (c&~STRIP)==0 && isprint(c);
 }
 
-static int _isword(register int c)
+static int _isword(int c)
 {
-	return((c&~STRIP) || isalnum(c) || c=='_');
+	return (c&~STRIP) || isalnum(c) || c=='_';
 }
 #endif /* SHOPT_MULTIBYTE */
 
+/*
+ * determine if the command line is blank (empty or all whitespace)
+ */
+static char blankline(Emacs_t *ep, genchar *out)
+{
+	int x;
+	ep->mark = cur;
+	for(x=0; x < cur; x++)
+	{
+#if SHOPT_MULTIBYTE
+		if(!iswspace((wchar_t)out[x]))
+#else
+		if(!isspace(out[x]))
+#endif /* SHOPT_MULTIBYTE */
+			return 0;
+	}
+	return 1;
+}
+
+#else
+NoN(emacs)
 #endif /* SHOPT_ESH */

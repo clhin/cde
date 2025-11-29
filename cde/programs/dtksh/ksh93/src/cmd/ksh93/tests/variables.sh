@@ -2,7 +2,7 @@
 #                                                                      #
 #               This software is part of the ast package               #
 #          Copyright (c) 1982-2012 AT&T Intellectual Property          #
-#          Copyright (c) 2020-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2020-2024 Contributors to ksh 93u+m           #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
 #                                                                      #
@@ -13,6 +13,9 @@
 #                  David Korn <dgk@research.att.com>                   #
 #                  Martijn Dekker <martijn@inlv.org>                   #
 #            Johnothan King <johnothanking@protonmail.com>             #
+#         hyenias <58673227+hyenias@users.noreply.github.com>          #
+#                  Lev Kujawski <int21h@mailbox.org>                   #
+#                      Phi <phi.debian@gmail.com>                      #
 #                                                                      #
 ########################################################################
 
@@ -120,6 +123,12 @@ got=$(RANDOM=1; print $RANDOM; /dev/null/x 2>/dev/null; print $RANDOM)
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 got=$(RANDOM=1; print $RANDOM; :& print $RANDOM)
 [[ $got == "$exp" ]] || err_exit "Background job influences reproducible $RANDOM sequence" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+
+# Seeding with an arithmetic expression should be identical to seeding using a shell assignment
+RANDOM=12345; exp="$RANDOM $RANDOM $RANDOM $RANDOM"
+let "RANDOM = 12345"; got="$RANDOM $RANDOM $RANDOM $RANDOM"
+[[ $got == "$exp" ]] || err_exit "Seeding RANDOM using arithmetic expression fails" \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 
 # SECONDS
@@ -305,7 +314,7 @@ done
 kill -s 0 $! || err_exit '$! does not point to latest asynchronous process'
 kill $!
 unset x
-cd /tmp || exit
+cd /dev || exit
 CDPATH=/
 x=$(cd ${tmp#/})
 if	[[ $x != $tmp ]]
@@ -896,6 +905,10 @@ $SHELL -c "$cmd" 2>/dev/null || err_exit "'$cmd' exit status $?, expected 0"
 SHLVL=1
 level=$($SHELL -c $'$SHELL -c \'print -r "$SHLVL"\'')
 [[ $level  == 3 ]]  || err_exit "SHLVL should be 3 not $level"
+echo 'print -r "$SHLVL"' >script
+chmod +x script
+level=$($SHELL -c '$SHELL ./script')
+[[ $level == 3 ]] || err_exit "SHLVL should be 3 not $level"
 
 [[ $($SHELL -c '{ x=1; : ${x.};print ok;}' 2> /dev/null) == ok ]] || err_exit '${x.} where x is a simple variable causes shell to abort'
 
@@ -931,6 +944,18 @@ actual=$(_test_isset var)
 [[ "$actual" = "$expect" ]] || err_exit "\${var+s} expansion fails in loops (expected '$expect', got '$actual')"
 actual=$(_test_isset IFS)
 [[ "$actual" = "$expect" ]] || err_exit "\${IFS+s} expansion fails in loops (expected '$expect', got '$actual')"
+
+got=$(
+	unset -v var
+	for i in 1 2 3 4 5; do
+		case ${var+s} in
+		( s )   print -n S; unset -v var;;
+		( '' )  print -n U; var.get() { : ; };;
+		esac
+	done
+)
+exp='USUSU'
+[[ $got == "$exp" ]] || err_exit "loop variants optimizer vs. discipline function (expected '$exp', got '$got')"
 
 # [[ -v var ]] within a loop.
 _test_v() { eval "
@@ -1459,6 +1484,140 @@ do
 		[[ -z $got ]] || err_exit "-$type array with .$disc discipline fails to be unset (got $(printf %q "$got"))"
 	done
 done
+
+# ======
+# A regression introduced in ksh93u+ 2012-04-23 caused LINENO to have
+# the wrong value after parsing a multi-line compound assignment.
+# https://github.com/ksh93/ksh/issues/484
+exp=3
+got=$("$SHELL" <<-\EOF
+	x=(typeset -a x=(
+	                [1]=))
+	echo $LINENO
+	EOF
+)
+((exp == got)) || err_exit 'LINENO is wrong after a multi-line compound assignment' \
+	"(expected $exp, got $(printf %q "$got"))"
+
+# ======
+# The += operator shouldn't copy variables outside of a function's scope
+# https://github.com/ksh93/ksh/issues/533
+unset v foo bar
+v=outside
+function f {
+	typeset v
+	print -n "$v"
+	v+="inside"
+	print "$v"
+}
+function foo {
+	echo $bar
+}
+function bar {
+	bar=bar_
+	bar+=foo foo
+	bar+=foo "$SHELL" -c 'echo $bar'
+	bar+=foo
+	echo $bar
+}
+exp='inside
+bar_foo
+bar_foo
+bar_foo'
+got=$(f && bar)
+[[ $exp == "$got" ]] || err_exit "+= operator used in function copies variable from outside of the function's scope" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+
+unset var
+function three {
+        :
+}
+function two {
+	var+='wrong ' sh -c 'true'
+	var+='wrong ' true
+	var+='wrong ' three
+	echo $var
+}
+function one {
+	var=one_ two
+}
+exp=one_
+got=$(one)
+[[ $exp == "$got" ]] || err_exit "+= operator in a nested function appends variable in the wrong scope" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+
+# ======
+# https://github.com/ksh93/ksh/issues/543
+got=$("$SHELL" -c $':\nLINENO=$LINENO true\nprint "Line 3 is $LINENO"')
+exp='Line 3 is 3'
+[[ $got == "$exp" ]] || err_exit "LINENO is wrong after being set in an invocation-local scope" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+
+# ======
+# https://github.com/ksh93/ksh/issues/545
+got=$({ "$SHELL" -uc $'a=A; function a.get { : $z; }\necho $a'; } 2>&1)
+let "(e=$?)==0" || err_exit "unset variable access in discipline function" \
+	"(got status $e$( ((e>128)) && print -n /SIG && kill -l "$e"), $(printf %q "$got"))"
+
+# ======
+# https://github.com/ksh93/ksh/issues/553
+unset NOTSET
+IFS=' '
+set -- ${NOTSET:-echo -e foo}
+IFS=/
+got=$#,$*
+exp=3,echo/-e/foo
+[[ $got == "$exp" ]] || err_exit "Field-split fallback string containing dash (1)" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+IFS=' '
+set -- ${NOTSET:-a b c xxx-xxx d e f}
+IFS=/
+got=$#,$*
+exp=7,a/b/c/xxx-xxx/d/e/f
+[[ $got == "$exp" ]] || err_exit "Field-split fallback string containing dash (2)" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+IFS=' '
+set -- ${NOTSET:-[a - b]}
+IFS=/
+got=$#,$*
+exp=3,[a/-/b]
+[[ $got == "$exp" ]] || err_exit "Field-split fallback string containing brackets and a dash" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+IFS=$' \t\n'  # restore default
+
+# ======
+# 'read' mistakenly parsed assignment-arguments instead of variable names
+# https://github.com/ksh93/ksh/issues/606#issuecomment-1474858962
+exp=': read: foo=bar: invalid variable name'
+got=$(set +x; { read foo=bar; } <<<baz 2>&1)
+[[ e=$? -eq 1 && $got == *"$exp" ]] || err_exit 'read foo=bar' \
+	"(expected status 1, *$(printf %q "$exp"); got status $e, $(printf %q "$got"))"
+
+# ======
+# Corruption of $_ causing crash when running subshell + discipline functions + shared-state comsub
+# https://github.com/ksh93/ksh/issues/616
+exp=$'OK1\nOK2'
+got=$(set +x; { "$SHELL" -c '
+	foo.get()
+	{
+		.sh.value=foo;
+	}
+	bar.get()
+	{
+		.sh.value=${ echo foo; }
+	}
+	: OK1
+	(
+		: $bar
+		: $foo
+	)
+	echo "$_"
+	: OK2
+	echo "$_"
+';} 2>&1)
+[[ e=$? -eq 0 && $got == "$exp" ]] || err_exit '$_ corruption' \
+	"(expected status 0, $(printf %q "$exp");" \
+	"got status $e$( ((e>128)) && print -n /SIG && kill -l "$e"), $(printf %q "$got"))"
 
 # ======
 exit $((Errors<125?Errors:125))

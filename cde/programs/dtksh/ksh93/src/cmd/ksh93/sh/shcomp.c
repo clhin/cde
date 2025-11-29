@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2011 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2024 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -12,6 +12,7 @@
 *                                                                      *
 *                  David Korn <dgk@research.att.com>                   *
 *                  Martijn Dekker <martijn@inlv.org>                   *
+*            Johnothan King <johnothanking@protonmail.com>             *
 *                                                                      *
 ***********************************************************************/
 /*
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
 		errormsg(SH_DICT,ERROR_usage(2),"%s",opt_info.arg);
 		UNREACHABLE();
 	}
-	sh_init(argc,argv,(Shinit_f)0);
+	sh_init(argc,argv,NULL);
 	script_id = error_info.id;  /* set by sh_init() */
 	error_info.id = shcomp_id;
 	sh.shcomp = 1;
@@ -115,7 +116,7 @@ int main(int argc, char *argv[])
 	}
 	if(error_info.errors || argc>2)
 	{
-		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage((char*)0));
+		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage(NULL));
 		UNREACHABLE();
 	}
 	if(cp= *argv)
@@ -131,7 +132,7 @@ int main(int argc, char *argv[])
 	if(cp= *argv)
 	{
 		struct stat statb;
-		if(!(out = sfopen((Sfio_t*)0,cp,"w")))
+		if(!(out = sfopen(NULL,cp,"w")))
 		{
 			errormsg(SH_DICT,ERROR_system(1),"%s: cannot create",cp);
 			UNREACHABLE();
@@ -167,7 +168,7 @@ int main(int argc, char *argv[])
 	error_info.id = script_id;
 	while(1)
 	{
-		stakset((char*)0,0);
+		stkset(sh.stk,NULL,0);
 		if(t = (Shnode_t*)sh_parse(in,0))
 		{
 			if((t->tre.tretyp&(COMMSK|COMSCAN))==0 && t->com.comnamp && strcmp(nv_name((Namval_t*)t->com.comnamp),"alias")==0)
@@ -197,24 +198,20 @@ int main(int argc, char *argv[])
 			{
 				if(t->com.comtyp&COMSCAN)
 				{
-					if(t->com.comarg->argnxt.ap)
+					if(t->com.comarg.ap->argnxt.ap)
 						break;
 				}
-				else
-				{
-					struct dolnod *ap = (struct dolnod*)t->com.comarg;
-					if(ap->dolnum>1)
-						break;
-				}
+				else if(t->com.comarg.dp->dolnum > 1)
+					break;
 			}
 		}
 	}
 	/* copy any remaining input */
 	if(!sfeof(in))
-		sfmove(in,out,SF_UNBOUND,-1);
+		sfmove(in,out,SFIO_UNBOUND,-1);
 	if(in!=sfstdin)
 		sfclose(in);
 	if(out!=sfstdout)
 		sfclose(out);
-	return(0);
+	return 0;
 }

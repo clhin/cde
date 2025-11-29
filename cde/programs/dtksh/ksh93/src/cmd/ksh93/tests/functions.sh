@@ -2,7 +2,7 @@
 #                                                                      #
 #               This software is part of the ast package               #
 #          Copyright (c) 1982-2012 AT&T Intellectual Property          #
-#          Copyright (c) 2020-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2020-2024 Contributors to ksh 93u+m           #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
 #                                                                      #
@@ -13,6 +13,7 @@
 #                  David Korn <dgk@research.att.com>                   #
 #                  Martijn Dekker <martijn@inlv.org>                   #
 #            Johnothan King <johnothanking@protonmail.com>             #
+#                  Lev Kujawski <int21h@mailbox.org>                   #
 #                                                                      #
 ########################################################################
 
@@ -145,7 +146,7 @@ then	err_exit 'cd inside nested subshell changes $PWD'
 fi
 fun() "$bin_echo" hello
 if	[[ $(fun) != hello ]]
-then	err_exit one line functions not working
+then	err_exit "'fun() simple_command' not working"
 fi
 cat > $tmp/script <<-\!
 	print -r -- "$1"
@@ -942,6 +943,16 @@ def()
 [[ $(def) == def ]] || err_exit '.sh.fun.set not capturing name()'
 unset -f .sh.fun.set
 
+# the traceback function above has set .sh.level in a loop; this should not break 'break'/'continue'
+for i in 1
+do	break
+	err_exit "'break' broken after setting .sh.level in a loop"
+done
+for i in 1
+do	continue
+	err_exit "'continue' broken after setting .sh.level in a loop"
+done
+
 # tests for debug functions
 basefile=${.sh.file}
 integer baseline
@@ -1005,8 +1016,9 @@ set -- $(bar)
 {
 got=$(
 s=$(ulimit -s)
-if	[[ $s == +([[:digit:]]) ]] && (( s < 16384 ))
-then	ulimit -s 16384 2>/dev/null
+if	[[ $s == +([[:digit:]]) ]] && (( s < 32768 ))
+then	# stack size doubled from 16384 to make this test pass under AddressSanitizer
+	ulimit -s 32768 2>/dev/null
 fi
 $SHELL << \+++
 f()
@@ -1254,7 +1266,7 @@ actual=$(
 	print 'function cd { echo "Func cd called with |$*|"; command cd "$@"; }' >"$prefix/functions/cd"
 	typeset -fu cd
 
-	PATH=$tmp/arglebargle:$PATH:$tmp/usr/bin:$tmp/bin
+	PATH=$tmp/arglebargle:$tmp/usr/bin:$tmp/bin
 	cd "$tmp/usr"
 	pwd
 )
@@ -1302,7 +1314,7 @@ got=$(
 	num=3.25+4.5 f1
 	typeset -p num
 )
-[[ $got == "$exp" ]] || echo 'assignment preceding POSIX function call is not correctly exported or propagated' \
+[[ $got == "$exp" ]] || err_exit 'assignment preceding POSIX function call is not correctly exported or propagated' \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 
 # ======
@@ -1409,7 +1421,7 @@ fi
 # ======
 # funcname.ksh crashed
 # https://github.com/ksh93/ksh/issues/212
-cat >$tmp/funcname.ksh <<-'EOF'
+cat >$tmp/funcname.ksh <<'EOF'
 # tweaked version of funname.ksh by Daniel Douglas
 # https://gist.github.com/ormaaj/12874b68acd06ee98b59
 # Used by permission: "Consider all my gists MIT / do whatever."
@@ -1500,6 +1512,67 @@ f-----------'
 got=$(set +x; { "$SHELL" -c '. ./funcname.ksh' ;} 2>&1)
 [[ $got == "$exp" ]] || err_exit 'funcname.ksh crash (dot)' \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+
+# ======
+# in 'funcname() simple_command' definitions, the first command word was sometimes corrupted with trailing garbage
+# https://github.com/ksh93/ksh/issues/203
+# (do not change this test; even indenting may cause the bug to fail to be triggered)
+m="command word corruption in 'fun() simple_command'"
+v2=:
+f() "$v2" hello
+f || err_exit "$m"
+v23=:
+f() "$v23" hello
+f || err_exit "$m"
+v234=:
+f() "$v234" hello
+f || err_exit "$m"
+v2345=:
+f() "$v2345" hello
+f || err_exit "$m"
+v23456=:
+f() "$v23456" hello
+f || err_exit "$m"
+v234567=:
+f() "$v234567" hello
+f || err_exit "$m"
+v2345678=:
+f() "$v2345678" hello
+f || err_exit "$m"
+v23456789=:
+f() "$v23456789" hello
+f || err_exit "$m"
+v234567890=:
+f() "$v234567890" hello
+f || err_exit "$m"
+unset -f f
+unset -v "${!v2@}"
+
+# ======
+# Test 'unset -f' in subshell
+# https://github.com/ksh93/ksh/issues/646
+# NOTE: for ast commands, '--version' is expected to exit with status 2
+exp='^  version         [[:alpha:]]{2,} (.*) ....-..-..$'
+for b in cd disown fg getopts printf pwd read ulimit umask whence
+do	got=$(unset -f "$b"; PATH=/dev/null; "$b" --version 2>&1)
+	[[ e=$? -eq 2 && $got =~ $exp ]] || err_exit "'unset -f $b' fails in subshell (1a)" \
+		"(expected status 2 and ERE match of $(printf %q "$exp"), got status $e and $(printf %q "$got"))"
+
+	# the extra 'exit' is needed to avoid optimising out the subshell
+	got=$("$SHELL" -c "(unset -f $b; PATH=/dev/null; $b --version); exit" 2>&1)
+	[[ e=$? -eq 2 && $got =~ $exp ]] || err_exit "'unset -f $b' fails in subshell (1b)" \
+		"(expected status 2 and ERE match of $(printf %q "$exp"), got status $e and $(printf %q "$got"))"
+
+	eval "$b() { echo BAD; }"
+	got=$(unset -f "$b"; PATH=/dev/null; "$b" --version 2>&1)
+	[[ e=$? -eq 2 && $got =~ $exp ]] || err_exit "'unset -f $b' fails in subshell (2a)" \
+		"(expected status 2 and ERE match of $(printf %q "$exp"), got status $e and $(printf %q "$got"))"
+	unset -f "$b"
+
+	got=$("$SHELL" -c "$b() { :; }; (unset -f $b; PATH=/dev/null; $b --version); exit" 2>&1)
+	[[ e=$? -eq 2 && $got =~ $exp ]] || err_exit "'unset -f $b' fails in subshell (2b)" \
+		"(expected status 2 and ERE match of $(printf %q "$exp"), got status $e and $(printf %q "$got"))"
+done
 
 # ======
 exit $((Errors<125?Errors:125))

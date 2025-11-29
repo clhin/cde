@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1985-2011 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2024 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -14,6 +14,7 @@
 *                  David Korn <dgk@research.att.com>                   *
 *                   Phong Vo <kpv@research.att.com>                    *
 *                  Martijn Dekker <martijn@inlv.org>                   *
+*            Johnothan King <johnothanking@protonmail.com>             *
 *                                                                      *
 ***********************************************************************/
 
@@ -33,10 +34,8 @@
 	size_t		nstrs; \
 	size_t		nmsgs; \
 	iconv_t		cvt; \
-	Sfio_t*		tmp; \
-	Vmalloc_t*	vm;
+	Sfio_t*		tmp;
 	
-#include <vmalloc.h>
 #include <error.h>
 #include <mc.h>
 #include <nl_types.h>
@@ -52,33 +51,33 @@
 char*
 mcfind(const char* locale, const char* catalog, int category, int nls, char* path, size_t size)
 {
-	register int		c;
-	register char*		s;
-	register char*		e;
-	register char*		p;
-	register const char*	v;
-	int			i;
-	int			first;
-	int			next;
-	int			last;
-	int			oerrno;
-	Lc_t*			lc;
-	char			file[PATH_MAX];
-	char*			paths[5];
+	int		c;
+	char*		s;
+	char*		e;
+	char*		p;
+	const char*	v = NULL;
+	int		i;
+	int		first;
+	int		next;
+	int		last;
+	int		oerrno;
+	Lc_t*		lc;
+	char		file[PATH_MAX];
+	char*		paths[5];
 
-	static char		lc_messages[] = "LC_MESSAGES";
+	static char	lc_messages[] = "LC_MESSAGES";
 
 	if ((category = lcindex(category, 1)) < 0)
-		return 0;
+		return NULL;
 	if (!(lc = locale ? lcmake(locale) : locales[category]))
-		return 0;
+		return NULL;
 	oerrno = errno;
 	if (catalog && *catalog == '/')
 	{
 		i = eaccess(catalog, R_OK);
 		errno = oerrno;
 		if (i)
-			return 0;
+			return NULL;
 		strlcpy(path, catalog, size);
 		return path;
 	}
@@ -193,7 +192,7 @@ mcfind(const char* locale, const char* catalog, int category, int nls, char* pat
 		}
 	}
 	errno = oerrno;
-	return 0;
+	return NULL;
 }
 
 /*
@@ -203,18 +202,17 @@ mcfind(const char* locale, const char* catalog, int category, int nls, char* pat
  */
 
 Mc_t*
-mcopen(register Sfio_t* ip)
+mcopen(Sfio_t* ip)
 {
-	register Mc_t*		mc;
-	register char**		mp;
-	register char*		sp;
-	Vmalloc_t*		vm;
-	char*			rp;
-	int			i;
-	int			j;
-	int			oerrno;
-	size_t			n;
-	char			buf[MC_MAGIC_SIZE];
+	Mc_t*		mc;
+	char**		mp;
+	char*		sp;
+	char*		rp;
+	int		i;
+	int		j;
+	int		oerrno;
+	size_t		n;
+	char		buf[MC_MAGIC_SIZE];
 
 	oerrno = errno;
 	if (ip)
@@ -226,22 +224,21 @@ mcopen(register Sfio_t* ip)
 		if (sfread(ip, buf, MC_MAGIC_SIZE) != MC_MAGIC_SIZE)
 		{
 			errno = oerrno;
-			return 0;
+			return NULL;
 		}
 		if (memcmp(buf, MC_MAGIC, MC_MAGIC_SIZE))
-			return 0;
+			return NULL;
 	}
 
 	/*
 	 * allocate the region
 	 */
 
-	if (!(vm = vmopen(Vmdcheap, Vmbest, 0)) || !(mc = vmnewof(vm, 0, Mc_t, 1, 0)))
+	if (!(mc = calloc(1, sizeof(Mc_t))))
 	{
 		errno = oerrno;
-		return 0;
+		return NULL;
 	}
-	mc->vm = vm;
 	mc->cvt = (iconv_t)(-1);
 	if (ip)
 	{
@@ -249,7 +246,7 @@ mcopen(register Sfio_t* ip)
 		 * read the translation record
 		 */
 
-		if (!(sp = sfgetr(ip, 0, 0)) || !(mc->translation = vmstrdup(vm, sp)))
+		if (!(sp = sfgetr(ip, 0, 0)) || !(mc->translation = strdup(sp)))
 			goto bad;
 
 		/*
@@ -272,20 +269,20 @@ mcopen(register Sfio_t* ip)
 		if (sfeof(ip))
 			goto bad;
 	}
-	else if (!(mc->translation = vmnewof(vm, 0, char, 1, 0)))
+	else if (!(mc->translation = calloc(1, sizeof(char))))
 		goto bad;
 
 	/*
 	 * allocate the remaining space
 	 */
 
-	if (!(mc->set = vmnewof(vm, 0, Mcset_t, mc->num + 1, 0)))
+	if (!(mc->set = calloc(mc->num + 1, sizeof(Mcset_t))))
 		goto bad;
 	if (!ip)
 		return mc;
-	if (!(mp = vmnewof(vm, 0, char*, mc->nmsgs + mc->num + 1, 0)))
+	if (!(mp = calloc(mc->nmsgs + mc->num + 1, sizeof(char*))))
 		goto bad;
-	if (!(rp = sp = vmalloc(vm, mc->nstrs + 1)))
+	if (!(rp = sp = malloc(mc->nstrs + 1)))
 		goto bad;
 
 	/*
@@ -326,9 +323,8 @@ mcopen(register Sfio_t* ip)
 	errno = oerrno;
 	return mc;
  bad:
-	vmclose(vm);
 	errno = oerrno;
-	return 0;
+	return NULL;
 }
 
 /*
@@ -338,7 +334,7 @@ mcopen(register Sfio_t* ip)
  */
 
 char*
-mcget(register Mc_t* mc, int set, int num, const char* msg)
+mcget(Mc_t* mc, int set, int num, const char* msg)
 {
 	char*		s;
 	size_t		n;
@@ -354,7 +350,7 @@ mcget(register Mc_t* mc, int set, int num, const char* msg)
 		sfstrseek(mc->tmp, p, SEEK_SET);
 	}
 	n = strlen(s) + 1;
-	iconv_write(mc->cvt, mc->tmp, &s, &n, NiL);
+	iconv_write(mc->cvt, mc->tmp, &s, &n, NULL);
 	return sfstrbase(mc->tmp) + p;
 }
 
@@ -366,12 +362,12 @@ mcget(register Mc_t* mc, int set, int num, const char* msg)
  */
 
 int
-mcput(register Mc_t* mc, int set, int num, const char* msg)
+mcput(Mc_t* mc, int set, int num, const char* msg)
 {
-	register int		i;
-	register char*		s;
-	register Mcset_t*	sp;
-	register char**		mp;
+	int		i;
+	char*		s;
+	Mcset_t*	sp;
+	char**		mp;
 
 	/*
 	 * validate the arguments
@@ -426,7 +422,7 @@ mcput(register Mc_t* mc, int set, int num, const char* msg)
 		if (set > mc->gen)
 		{
 			i = MC_SET_MAX;
-			if (!(sp = vmnewof(mc->vm, 0, Mcset_t, i + 1, 0)))
+			if (!(sp = calloc(i + 1, sizeof(Mcset_t))))
 				return -1;
 			mc->gen = i;
 			for (i = 1; i <= mc->num; i++)
@@ -452,7 +448,7 @@ mcput(register Mc_t* mc, int set, int num, const char* msg)
 					i = 2 * num;
 				if (i > MC_NUM_MAX)
 					i = MC_NUM_MAX;
-				if (!(mp = vmnewof(mc->vm, 0, char*, i + 1, 0)))
+				if (!(mp = calloc(i + 1, sizeof(char*))))
 					return -1;
 				mc->gen = i;
 				sp->msg = mp;
@@ -464,7 +460,7 @@ mcput(register Mc_t* mc, int set, int num, const char* msg)
 				i = 2 * mc->gen;
 				if (i > MC_NUM_MAX)
 					i = MC_NUM_MAX;
-				if (!(mp = vmnewof(mc->vm, sp->msg, char*, i + 1, 0)))
+				if (!(mp = realloc(sp->msg, sizeof(char*) * (i + 1))))
 					return -1;
 				sp->gen = i;
 				sp->msg = mp;
@@ -493,7 +489,7 @@ mcput(register Mc_t* mc, int set, int num, const char* msg)
 	 * allocate, add and adjust the string table size
 	 */
 
-	if (!(s = vmstrdup(mc->vm, msg)))
+	if (!(s = strdup(msg)))
 		return -1;
 	sp->msg[num] = s;
 	mc->nstrs += strlen(s) + 1;
@@ -506,13 +502,13 @@ mcput(register Mc_t* mc, int set, int num, const char* msg)
  */
 
 int
-mcdump(register Mc_t* mc, register Sfio_t* op)
+mcdump(Mc_t* mc, Sfio_t* op)
 {
-	register int		i;
-	register int		j;
-	register int		n;
-	register char*		s;
-	register Mcset_t*	sp;
+	int		i;
+	int		j;
+	int		n;
+	char*		s;
+	Mcset_t*	sp;
 
 	/*
 	 * write the magic
@@ -606,14 +602,14 @@ mcdump(register Mc_t* mc, register Sfio_t* op)
  */
 
 int
-mcindex(register const char* s, char** e, int* set, int* msg)
+mcindex(const char* s, char** e, int* set, int* msg)
 {
-	register int		c;
-	register int		m;
-	register int		n;
-	register int		r;
-	register unsigned char*	cv;
-	char*			t;
+	int		c;
+	int		m;
+	int		n;
+	int		r;
+	unsigned char*	cv;
+	char*		t;
 
 	m = 0;
 	n = strtol(s, &t, 0);
@@ -621,7 +617,7 @@ mcindex(register const char* s, char** e, int* set, int* msg)
 	{
 		SFCVINIT();
 		cv = _Sfcv36;
-		for (n = m = 0; (c = cv[*s]) < 36; s++)
+		for (n = m = 0; (c = cv[*((unsigned char*)s)]) < 36; s++)
 		{
 			m++;
 			n ^= c;
@@ -658,7 +654,7 @@ mcindex(register const char* s, char** e, int* set, int* msg)
  */
 
 int
-mcclose(register Mc_t* mc)
+mcclose(Mc_t* mc)
 {
 	if (!mc)
 		return -1;
@@ -666,6 +662,5 @@ mcclose(register Mc_t* mc)
 		sfclose(mc->tmp);
 	if (mc->cvt != (iconv_t)(-1))
 		iconv_close(mc->cvt);
-	vmclose(mc->vm);
 	return 0;
 }

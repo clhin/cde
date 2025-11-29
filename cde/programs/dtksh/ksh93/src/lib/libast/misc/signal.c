@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1985-2011 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2024 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -23,17 +23,8 @@
  * fun==SIG_DFL also unblocks signal
  */
 
-#if !__HAIKU__
-
-#undef	signal
-#define signal		______signal
-
-#endif
-
 #include <ast.h>
 #include <sig.h>
-
-#undef	signal
 
 #undef	_def_map_ast
 #include <ast_map.h>
@@ -60,7 +51,7 @@
 #define	sa_mask		sv_mask
 #endif
 
-extern Sig_handler_t
+Sig_handler_t
 signal(int sig, Sig_handler_t fun)
 {
 	struct sigaction	na;
@@ -86,24 +77,16 @@ signal(int sig, Sig_handler_t fun)
 #if defined(SA_INTERRUPT) || defined(SA_RESTART)
 	switch (sig)
 	{
-#if defined(SIGIO) || defined(SIGTSTP) || defined(SIGTTIN) || defined(SIGTTOU)
 #if defined(SIGIO)
 	case SIGIO:
 #endif
-#if defined(SIGTSTP)
 	case SIGTSTP:
-#endif
-#if defined(SIGTTIN)
 	case SIGTTIN:
-#endif
-#if defined(SIGTTOU)
 	case SIGTTOU:
-#endif
 #if defined(SA_RESTART)
 		na.sa_flags = SA_RESTART;
 #endif
 		break;
-#endif
 	default:
 #if defined(SA_INTERRUPT)
 		na.sa_flags = SA_INTERRUPT;
@@ -112,7 +95,7 @@ signal(int sig, Sig_handler_t fun)
 	}
 #endif
 	if (sigaction(sig, &na, &oa))
-		return 0;
+		return NULL;
 	if (unblock)
 		sigunblock(sig);
 	return oa.sa_handler;

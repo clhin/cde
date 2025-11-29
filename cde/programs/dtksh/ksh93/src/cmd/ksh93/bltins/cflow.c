@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2024 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -12,6 +12,7 @@
 *                                                                      *
 *                  David Korn <dgk@research.att.com>                   *
 *                  Martijn Dekker <martijn@inlv.org>                   *
+*            Johnothan King <johnothanking@protonmail.com>             *
 *                                                                      *
 ***********************************************************************/
 /*
@@ -38,9 +39,9 @@
  */
 #if 0
     /* for the dictionary generator */
-    int	b_exit(int n, register char *argv[],Shbltin_t *context){}
+    int	b_exit(int n, char *argv[],Shbltin_t *context){}
 #endif
-int	b_return(register int n, register char *argv[],Shbltin_t *context)
+int	b_return(int n, char *argv[],Shbltin_t *context)
 {
 	/* 'return' outside of function, dotscript and profile behaves like 'exit' */
 	char do_exit = **argv=='e' || sh.fn_depth==0 && sh.dot_depth==0 && !sh_isstate(SH_PROFILE);
@@ -53,25 +54,32 @@ int	b_return(register int n, register char *argv[],Shbltin_t *context)
 		goto done;
 	    case '?':
 		errormsg(SH_DICT,ERROR_usage(0), "%s", opt_info.arg);
-		return(2);
+		return 2;
 	}
 done:
 	if(error_info.errors)
 	{
-		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage((char*)0));
+		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage(NULL));
 		UNREACHABLE();
 	}
 	argv += opt_info.index;
 	if(*argv)
 	{
-		long l = strtol(*argv, NIL(char**), 10);
+		int r;
+		intmax_t l = strtoll(*argv, NULL, 10);
 		if(do_exit)
+		{
 			n = (int)(l & SH_EXITMASK);	/* exit: apply bitmask before conversion to avoid undefined int overflow */
-		else if((long)(n = (int)l) != l)	/* return: convert to int and check for overflow (should be safe enough) */
+			if (sh.intrap)
+				sh.intrap_exit_n = 1;
+		}
+		else if(r = (int)l, l != (intmax_t)r)	/* return: convert to int and check for overflow (should be safe enough) */
 		{
 			errormsg(SH_DICT,ERROR_warn(0),"%s: out of range",*argv);
 			n = 128;			/* overflow is undefined, so use a consistent status for this */
 		}
+		else
+			n = r;
 	}
 	else
 	{
@@ -90,12 +98,12 @@ done:
  */
 #if 0
     /* for the dictionary generator */
-    int	b_continue(int n, register char *argv[],Shbltin_t *context){}
+    int	b_continue(int n, char *argv[],Shbltin_t *context){}
 #endif
-int	b_break(register int n, register char *argv[],Shbltin_t *context)
+int	b_break(int n, char *argv[],Shbltin_t *context)
 {
 	char *arg;
-	register int cont= **argv=='c';
+	int cont= **argv=='c';
 	NOT_USED(context);
 	while((n = optget(argv,cont?sh_optcont:sh_optbreak))) switch(n)
 	{
@@ -104,11 +112,11 @@ int	b_break(register int n, register char *argv[],Shbltin_t *context)
 		break;
 	    case '?':
 		errormsg(SH_DICT,ERROR_usage(0), "%s", opt_info.arg);
-		return(2);
+		return 2;
 	}
 	if(error_info.errors)
 	{
-		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage((char*)0));
+		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage(NULL));
 		UNREACHABLE();
 	}
 	argv += opt_info.index;
@@ -118,7 +126,7 @@ int	b_break(register int n, register char *argv[],Shbltin_t *context)
 		n = (int)strtol(arg,&arg,10);
 		if(n<=0 || *arg)
 		{
-			errormsg(SH_DICT,ERROR_exit(1),e_nolabels,*argv);
+			errormsg(SH_DICT,ERROR_exit(1),e_number,*argv);
 			UNREACHABLE();
 		}
 	}
@@ -130,5 +138,5 @@ int	b_break(register int n, register char *argv[],Shbltin_t *context)
 		if(cont)
 			sh.st.breakcnt = -sh.st.breakcnt;
 	}
-	return(0);
+	return 0;
 }

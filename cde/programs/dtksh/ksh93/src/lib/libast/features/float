@@ -1,14 +1,32 @@
 set	nooptimize
 set	stdio FEATURE/standards
 hdr	float,limits,math,values
-lib,npt	frexp,frexpl,ldexp,ldexpl,finite,finitel,isinfl,isnanl,copysign,copysignl,powf,pow,powl FEATURE/standards math.h -lm
+lib,npt	frexp,ldexp,finite,finitel,isinfl,isnanl,copysign,copysignl,powf,pow,powl FEATURE/standards math.h -lm
+lib	frexpl -lm note{ frexpl present and works }end link{
+		#include <math.h>
+		int main(void)
+		{
+			int e;
+			long double f = frexpl(123.456789,&e);
+			return !(e==7 && f>0.964506 && f<0.964507);
+		}
+	}end
+lib	ldexpl -lm note{ ldexpl present and works }end link{
+		#include <math.h>
+		int main(void)
+		{
+			long double f = ldexpl(0.96450616406250000434141611549421213567256927490234375, 7);
+			return !(f>=123.4567890 && f<123.4567891);
+		}
+	}end
+npt	frexpl,ldexpl
 lib	fpclassify -lm note{ fpclassify present and works }end link{
 		#include <sys/types.h>
 		#include <sys/stat.h>
 		#include <stdlib.h>
 		#include <unistd.h>
 		#include <math.h>
-		int main() { return fpclassify(-0.0); }
+		int main(void) { return fpclassify(-0.0); }
 	}end
 lib	isinf -lm note{ isinf present and works }end link{
 		#include <sys/types.h>
@@ -16,7 +34,7 @@ lib	isinf -lm note{ isinf present and works }end link{
 		#include <stdlib.h>
 		#include <unistd.h>
 		#include <math.h>
-		int main() { return isinf(-0.0); }
+		int main(void) { return isinf(-0.0); }
 	}end
 lib	isnan -lm note{ isnan present and works }end link{
 		#include <sys/types.h>
@@ -24,7 +42,7 @@ lib	isnan -lm note{ isnan present and works }end link{
 		#include <stdlib.h>
 		#include <unistd.h>
 		#include <math.h>
-		int main() { return isnan(-0.0); }
+		int main(void) { return isnan(-0.0); }
 	}end
 lib	signbit -lm note{ signbit present and works }end link{
 		#include <sys/types.h>
@@ -32,13 +50,13 @@ lib	signbit -lm note{ signbit present and works }end link{
 		#include <stdlib.h>
 		#include <unistd.h>
 		#include <math.h>
-		int main() { return signbit(-0.0); }
+		int main(void) { return signbit(-0.0); }
 	}end
 
 tst	ast_no_um2fm note{ no unsigned intmax => floatmax cast }end nolink{
 	#include "FEATURE/common"
 	int
-	main()
+	main(void)
 	{
 		_ast_fltmax_t		f = 0;
 		unsigned _ast_intmax_t	i = 0;
@@ -50,7 +68,7 @@ tst	ast_no_um2fm note{ no unsigned intmax => floatmax cast }end nolink{
 
 tst	ast_mpy_overflow_fpe note{ fpe on mpy overflow }end noexecute{
 	int
-	main()
+	main(void)
 	{
 		float	f;
 		float	p;
@@ -69,7 +87,7 @@ tst	ast_mpy_overflow_fpe note{ fpe on mpy overflow }end noexecute{
 
 tst	ast_div_underflow_fpe note{ fpe on div underflow }end noexecute{
 	int
-	main()
+	main(void)
 	{
 		float	f;
 		float	p;
@@ -267,10 +285,10 @@ tst	- note{ missing floating point limits }end output{
 	}
 	#endif
 	int
-	main()
+	main(void)
 	{
-		register int		i;
-		register int		s;
+		int		i;
+		int		s;
 		float			f;
 		float			pf;
 		float			mf;
@@ -878,13 +896,13 @@ tst	- note{ missing floating point limits }end output{
 		printf("extern double		frexp(double, int*);\n");
 	#endif
 	#if !_lib_frexpl || _npt_frexpl
-		printf("extern _ast_fltmax_t	frexpl(_ast_fltmax_t, int*);\n");
+		printf("extern long double	frexpl(long double, int*);\n");
 	#endif
 	#if !_lib_ldexp || _npt_ldexp
 		printf("extern double		ldexp(double, int);\n");
 	#endif
 	#if !_lib_ldexpl || _npt_ldexpl
-		printf("extern _ast_fltmax_t	ldexpl(_ast_fltmax_t, int);\n");
+		printf("extern long double	ldexpl(long double, int);\n");
 	#endif
 
 		return 0;
@@ -903,7 +921,7 @@ tst	- note{ double exponent bitfoolery }end output{
 		double			f;
 	} _ast_dbl_exp_t;
 	int
-	main()
+	main(void)
 	{
 		int			i;
 		int			j;
@@ -940,7 +958,7 @@ tst	- note{ long double exponent bitfoolery }end output{
 		_ast_fltmax_t		f;
 	} _ast_fltmax_exp_t;
 	int
-	main()
+	main(void)
 	{
 		int			i;
 		int			j;
@@ -971,7 +989,7 @@ tst	- note{ long double exponent bitfoolery }end output{
 tst	- -DN=1 - -DN=2 note{ _ast_fltmax_t maximum integral type }end output{
 	#include <stdio.h>
 	int
-	main()
+	main(void)
 	{
 	#if N == 1
 		unsigned long long	m;
@@ -1010,7 +1028,7 @@ tst	- -DSCAN=1 - -lm -DSTRTO=1 - -DMAC=1 - -DDIV=1 - -DEXP=1 - -DADD=1 - -DMPY=1
 	#if _hdr_values
 	#include <values.h>
 	#endif
-	#if STRTO && _hdr_stdlib
+	#if STRTO
 	#include <stdlib.h>
 	#endif
 	#if !defined(FLT_MAX) && defined(MAXFLOAT)
@@ -1025,8 +1043,8 @@ tst	- -DSCAN=1 - -lm -DSTRTO=1 - -DMAC=1 - -DDIV=1 - -DEXP=1 - -DADD=1 - -DMPY=1
 	static void
 	list(const char* typ, const char* var, void* val, int siz)
 	{
-		register unsigned char*	u = (unsigned char*)val;
-		register unsigned char*	e = u + siz;
+		unsigned char*	u = (unsigned char*)val;
+		unsigned char*	e = u + siz;
 	
 		printf("#define _ast_%s_%s_init\t0x%02x", typ, var, *u);
 		while (++u < e)
@@ -1034,7 +1052,7 @@ tst	- -DSCAN=1 - -lm -DSTRTO=1 - -DMAC=1 - -DDIV=1 - -DEXP=1 - -DADD=1 - -DMPY=1
 		printf("\n");
 	}
 	int
-	main()
+	main(void)
 	{
 	#if SCAN || STRTO
 	#undef	NAN
@@ -1227,7 +1245,7 @@ if	need_ast_pow_macros -lm note{ are IEEE pow macro replacements needed }end exe
 	#include <stdlib.h>
 	#include <unistd.h>
 	#include <math.h>
-	int main() { return pow(1.0, 1.0 / 0.0) == 1.0; }
+	int main(void) { return pow(1.0, 1.0 / 0.0) == 1.0; }
 }end {
 	#define powf(x,y)	(((x)==1.0)?1.0:powf((x),(y)))
 	#define pow(x,y)	(((x)==1.0)?1.0:pow((x),(y)))
@@ -1241,7 +1259,7 @@ elif	tst need_ast_pow_funs -lm note{ are IEEE pow function replacements needed }
 	#include <math.h>
 	/* This bit of obfuscation defeats GCC's code optimizer. */
 	double (*volatile _ast_ppow)(double,double);
-	int main () { _ast_ppow = &pow; return (*_ast_ppow)(1.0, 1.0 / 0.0) == 1.0; }
+	int main (void) { _ast_ppow = &pow; return (*_ast_ppow)(1.0, 1.0 / 0.0) == 1.0; }
 }end {
 	float			_ast_powf(float x, float y);
 	double			_ast_pow(double x, double y);

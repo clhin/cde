@@ -28,10 +28,17 @@ Then `cd` to the top directory and run:
 ```sh
 bin/package make
 ```
+To suppress compiler output, use `quiet make` instead of `make`.
+In some non-POSIX shells you might need to prepend `sh` to all calls to `bin/package`.
 
 The compiled binaries are stored in the `arch` directory, in a subdirectory
 that corresponds to your architecture. The command `bin/package host type`
 outputs the name of this subdirectory.
+
+Dynamically linked binaries, if supported for your system, are stored in
+`dyn/bin` and `dyn/lib` subdirectories of your architecture directory.
+If built, they are built in addition to the statically linked versions.
+Export `AST_NO_DYLIB` to deactivate building dynamically linked versions.
 
 If you have trouble or want to tune the binaries, you may pass additional
 compiler and linker flags. It is usually best to export these as environment
@@ -53,7 +60,9 @@ bin/package make SHELL=/bin/bash CCFLAGS="-O2 -I/opt/local/include" LDFLAGS="-L/
 
 **Note:** Do not add compiler flags that cause the compiler to emit terminal
 escape codes, such as `-fdiagnostics-color=always`; this will cause the
-build to fail as the probing code greps compiler diagnostics.
+build to fail as the probing code greps compiler diagnostics. Additionally,
+do not add the `-ffast-math` compiler flag; arithmetic bugs will occur when
+using that flag.
 
 For more information run
 ```sh
@@ -77,6 +86,11 @@ Start by reading the information printed by:
 ```sh
 bin/shtests --man
 ```
+To hand-test ksh (as well as the utilities and the autoloadable functions
+that come with it) without installing, run:
+```sh
+bin/package use
+```
 
 ### Install
 
@@ -91,6 +105,13 @@ available, is installed in `share/man`.
 
 Destination directories with whitespace or shell pattern characters in their
 pathnames are not yet supported.
+
+If a dynamically linked version of ksh and associated commands has been
+built, then the `install` subcommand will prefer that: commands, dynamic
+libraries and associated header files will be installed then. To install the
+statically linked version instead (and skip the header files), either delete
+the `dyn` subdirectory, or export `AST_NO_DYLIB=y` before building to prevent
+it from being created in the first place.
 
 ## What is ksh93?
 
@@ -112,7 +133,7 @@ in performance. In addition, "sh" scripts can be run on KSH-93 without
 modification.
 
 The code should conform to the
-[IEEE POSIX 1003.1 standard](http://www.opengroup.org/austin/papers/posix_faq.html)
+[IEEE POSIX 1003.1 standard](https://www.opengroup.org/austin/papers/posix_faq.html)
 and to the proposed ANSI C standard so that it should be portable to all
 such systems. Like the previous version, KSH-88, it is designed to accept
 eight bit character sets transparently, thereby making it internationally
