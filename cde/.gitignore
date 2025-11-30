@@ -2182,3 +2182,15 @@ lib/DtMmdb/compression/sgml.C
 lib/DtMmdb/schema/sheet.C
 lib/DtMmdb/schema/sheet.tab.h
 lib/DtMmdb/schema/token.C
+
+# programs/dtksh
+programs/dtksh/ksh93/bin
+programs/dtksh/ksh93/dyn
+programs/dtksh/ksh93/etc
+programs/dtksh/ksh93/src/cmd/INIT/dylink
+programs/dtksh/ksh93/src/cmd/INIT/mkdeps
+programs/dtksh/ksh93/src/cmd/INIT/mkreq
+programs/dtksh/ksh93/src/cmd/INIT/mkreq-maplib
+programs/dtksh/ksh93/src/cmd/INIT/proto
+programs/dtksh/ksh93/src/lib/libast/mamake
+programs/dtksh/ksh93/src/lib/libast/astmath.out
