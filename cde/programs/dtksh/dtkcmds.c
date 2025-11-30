@@ -30,7 +30,7 @@
 /*	actual or intended publication of such source code.     */
 
 /* X includes */
-
+#include "stak.h"
 #include "name.h"
 #include "shell.h"
 #undef access
