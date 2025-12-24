@@ -631,6 +631,7 @@ lib/DtSearch/Makefile
 lib/DtSearch/raima/Makefile
 
 lib/DtWidget/Makefile
+lib/DtWidget/UNIXbindings
 
 lib/DtHelp/Makefile
 lib/DtHelp/il/Makefile

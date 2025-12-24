@@ -16,7 +16,7 @@
 !#  include this file simply by inserting a #include directive in your
 !#  .Xdefaults file:
 !#
-!#	#include "/usr/dt/app-defaults/LANG/UNIXbindings"
+!#	#include "@CDE_INSTALLATION_TOP@/app-defaults/LANG/UNIXbindings"
 !#
 !#  where LANG is the value of your $LANG environment variable
 !#  (normally "C").

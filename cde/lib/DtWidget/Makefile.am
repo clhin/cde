@@ -1,4 +1,4 @@
-unixdir = $(CDE_INSTALLATION_TOP)/app-defaults/C
+appdefaultsdir = $(CDE_INSTALLATION_TOP)/app-defaults/C
 
 MAINTAINERCLEANFILES = Makefile.in
 
@@ -28,10 +28,7 @@ libDtWidget_la_SOURCES = ComboBox.c      Control.c       DialogBox.c \
 			 SearchDlg.c     SpinBox.c       TitleBox.c \
 			 View.c
 
-# cpp this...
-BUILT_SOURCES = UNIXbindings
-CLEANFILES = UNIXbindings
 
-UNIXbindings: UNIXbindings.cpp
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(AM_CPPFLAGS) $< > $@
+
+dist_appdefaults_DATA = UNIXbindings
+CLEANFILES = UNIXbindings
