@@ -768,6 +768,7 @@ programs/dtappbuilder/src/abmf/Makefile
 programs/dtappbuilder/src/ab/Makefile
 
 programs/dtappintegrate/Makefile
+programs/dtappintegrate/dtappintegrate
 
 programs/dtprintegrate/Makefile
 
