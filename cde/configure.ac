@@ -832,6 +832,7 @@ programs/util/Makefile
 programs/util/dttypes/Makefile
 
 programs/dtopen/Makefile
+programs/dtopen/dtopen
 
 programs/dtdocbook/Makefile
 programs/dtdocbook/dtdocbook2man

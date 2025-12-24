@@ -1,18 +1,18 @@
-XCOMM!KORNSHELL
-XCOMM
-XCOMM dtopen - provide an interface for some useful applications.
-XCOMM
-XCOMM #############################################################
-XCOMM #set -x           # uncomment for debugging
-XCOMM ###############################################################
-XCOMM Init
+#!@KSH@
+#
+# dtopen - provide an interface for some useful applications.
+#
+# #############################################################
+# #set -x           # uncomment for debugging
+# ###############################################################
+# Init
 
 DTOPEN="dtopen"                   # Identity crisis
 APPNAME="$(basename "$0")"        # the app to locate/run
 
-XCOMM apps to look for, given an action (based on APPNAME - see MAIN)
+# apps to look for, given an action (based on APPNAME - see MAIN)
 
-XCOMM image viewing
+# image viewing
 if [ -z "$DTOPEN_VIMAGE" ]
 then
     VIMAGE="xv display gimp"
@@ -20,7 +20,7 @@ else
     VIMAGE="$DTOPEN_VIMAGE"
 fi
 
-XCOMM video viewing
+# video viewing
 if [ -z "$DTOPEN_VVIDEO" ]
 then
     VVIDEO="vlc ffplay"
@@ -28,7 +28,7 @@ else
     VVIDEO="$DTOPEN_VVIDEO"
 fi
 
-XCOMM postscript viewing
+# postscript viewing
 if [ -z "$DTOPEN_VPS" ]
 then
     VPS="mgv gv"
@@ -36,7 +36,7 @@ else
     VPS="$DTOPEN_VPS"
 fi
 
-XCOMM PDF viewing
+# PDF viewing
 if [ -z "$DTOPEN_VPDF" ]
 then
     VPDF="okular xpdf"
@@ -44,25 +44,25 @@ else
     VPDF="$DTOPEN_VPDF"
 fi
 
-XCOMM ##############################################################
-XCOMM ## Utility Functions
+# ##############################################################
+# ## Utility Functions
 
-XCOMM ## Find the path of a program
+# ## Find the path of a program
 FindProg()
 {
-XCOMM   FindProg "program"
-XCOMM   - returns full path, or ""
+#   FindProg "program"
+#   - returns full path, or ""
 
     whence "$1"
 
     return 0
 }
 
-XCOMM ## Show an error message
+# ## Show an error message
 ErrorMsg()
 {
-XCOMM   ErrorMsg "Title "Message" ["OK"]
-XCOMM   use dterror.ds to display it...
+#   ErrorMsg "Title "Message" ["OK"]
+#   use dterror.ds to display it...
 
     if [ -z "$3" ]
     then    # default to 'OK'
@@ -71,15 +71,15 @@ XCOMM   use dterror.ds to display it...
         OKM="$3"
     fi
 
-    CDE_INSTALLATION_TOP/bin/dterror.ds "$2" "$1" "$OKM"
+    @CDE_INSTALLATION_TOP@/bin/dterror.ds "$2" "$1" "$OKM"
 
     return 0
 }
 
-XCOMM ## do a simple command
+# ## do a simple command
 DoSimpleCmd()
 {
-XCOMM   DoSimpleCmd "commands" args
+#   DoSimpleCmd "commands" args
 
     didone=0
     cmds="$1"
@@ -108,12 +108,12 @@ XCOMM   DoSimpleCmd "commands" args
 }
 
 
-XCOMM ##################################################################
-XCOMM ## MAIN
+# ##################################################################
+# ## MAIN
 
-XCOMM # We'll just look at our args and decide what to do...
+# # We'll just look at our args and decide what to do...
 
-XCOMM # Commands we'll recognize
+# # Commands we'll recognize
 
 COMMANDS="dtopen_image dtopen_pdf dtopen_ps dtopen_video"
 
@@ -131,11 +131,11 @@ case $APPNAME in
         DoSimpleCmd "$VVIDEO" "$*"
         ;;
     *)
-XCOMM   Unknown
+#   Unknown
         ErrorMsg "${DTOPEN}: Unknown Helper Application" \
                   "\"$APPNAME\" is not a recognized Helper Application.  \nKnown Helper Applications are:\n\n$COMMANDS"
         ;;
 esac
 
-XCOMM # Fini
+# # Fini
 exit 0

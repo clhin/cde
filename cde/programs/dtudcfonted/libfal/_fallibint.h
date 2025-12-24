@@ -381,7 +381,6 @@ extern int errno;			/* Internal system error number. */
  *
  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
 #define GetReq(name, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(x##name##Req)) > dpy->bufmax)\
@@ -392,22 +391,9 @@ extern int errno;			/* Internal system error number. */
 	dpy->bufptr += SIZEOF(x##name##Req);\
 	dpy->request++
 
-#else  /* non-ANSI C uses empty comment instead of "##" for token concatenation */
-#define GetReq(name, req) \
-        WORD64ALIGN\
-	if ((dpy->bufptr + SIZEOF(x/**/name/**/Req)) > dpy->bufmax)\
-		_XFlush(dpy);\
-	req = (x/**/name/**/Req *)(dpy->last_req = dpy->bufptr);\
-	req->reqType = X_/**/name;\
-	req->length = (SIZEOF(x/**/name/**/Req))>>2;\
-	dpy->bufptr += SIZEOF(x/**/name/**/Req);\
-	dpy->request++
-#endif
-
 /* GetReqExtra is the same as GetReq, but allocates "n" additional
    bytes after the request. "n" must be a multiple of 4!  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
 #define GetReqExtra(name, n, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(x##name##Req) + n) > dpy->bufmax)\
@@ -417,17 +403,6 @@ extern int errno;			/* Internal system error number. */
 	req->length = (SIZEOF(x##name##Req) + n)>>2;\
 	dpy->bufptr += SIZEOF(x##name##Req) + n;\
 	dpy->request++
-#else
-#define GetReqExtra(name, n, req) \
-        WORD64ALIGN\
-	if ((dpy->bufptr + SIZEOF(x/**/name/**/Req) + n) > dpy->bufmax)\
-		_XFlush(dpy);\
-	req = (x/**/name/**/Req *)(dpy->last_req = dpy->bufptr);\
-	req->reqType = X_/**/name;\
-	req->length = (SIZEOF(x/**/name/**/Req) + n)>>2;\
-	dpy->bufptr += SIZEOF(x/**/name/**/Req) + n;\
-	dpy->request++
-#endif
 
 
 /*
@@ -436,7 +411,6 @@ extern int errno;			/* Internal system error number. */
  * "rid" is the name of the resource.
  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
 #define GetResReq(name, rid, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(xResourceReq)) > dpy->bufmax)\
@@ -447,24 +421,11 @@ extern int errno;			/* Internal system error number. */
 	req->id = (rid);\
 	dpy->bufptr += SIZEOF(xResourceReq);\
 	dpy->request++
-#else
-#define GetResReq(name, rid, req) \
-        WORD64ALIGN\
-	if ((dpy->bufptr + SIZEOF(xResourceReq)) > dpy->bufmax)\
-	    _XFlush(dpy);\
-	req = (xResourceReq *) (dpy->last_req = dpy->bufptr);\
-	req->reqType = X_/**/name;\
-	req->length = 2;\
-	req->id = (rid);\
-	dpy->bufptr += SIZEOF(xResourceReq);\
-	dpy->request++
-#endif
 
 /*
  * GetEmptyReq is for those requests that have no arguments
  * at all.
  */
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
 #define GetEmptyReq(name, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(xReq)) > dpy->bufmax)\
@@ -474,17 +435,6 @@ extern int errno;			/* Internal system error number. */
 	req->length = 1;\
 	dpy->bufptr += SIZEOF(xReq);\
 	dpy->request++
-#else
-#define GetEmptyReq(name, req) \
-        WORD64ALIGN\
-	if ((dpy->bufptr + SIZEOF(xReq)) > dpy->bufmax)\
-	    _XFlush(dpy);\
-	req = (xReq *) (dpy->last_req = dpy->bufptr);\
-	req->reqType = X_/**/name;\
-	req->length = 1;\
-	dpy->bufptr += SIZEOF(xReq);\
-	dpy->request++
-#endif
 
 #define MakeBigReq(req,n) \
     { \
