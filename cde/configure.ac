@@ -595,6 +595,8 @@ dnl All of the makefiles we need to generate go here...
 AC_CONFIG_FILES([
 Makefile
 
+copyright
+
 util/Makefile
 util/tradcpp/Makefile
 
@@ -616,6 +618,7 @@ lib/tt/lib/util/Makefile
 lib/tt/bin/Makefile
 lib/tt/bin/shell/Makefile
 lib/tt/bin/ttauth/Makefile
+lib/tt/bin/ttauth/ttauth.man
 lib/tt/bin/scripts/Makefile
 lib/tt/bin/scripts/ttce2xdr
 lib/tt/bin/tttar/Makefile
@@ -786,6 +789,7 @@ programs/dtdspmsg/Makefile
 programs/ttsnoop/Makefile
 
 programs/dtimsstart/Makefile
+programs/dtimsstart/0020.dtims
 
 programs/dtpdm/Makefile
 
@@ -908,6 +912,8 @@ programs/localized/ja_JP.UTF-8/appmanager/Makefile
 
 doc/Makefile
 
+doc/common/help/HELPEnt.sgm
+
 doc/en_US.UTF-8/Makefile
 doc/en_US.UTF-8/help/Makefile
 doc/en_US.UTF-8/help/common/Desktop.hf
@@ -947,11 +953,7 @@ doc/ja_JP.UTF-8/help/common/Desktop.hf
 doc/ja_JP.UTF-8/help/common/DesktopIntro.hf
 
 include/Makefile
-
-copyright
-doc/common/help/HELPEnt.sgm
 include/Dt/Dt.h
-lib/tt/bin/ttauth/ttauth.man
 ])
 
 AC_OUTPUT
