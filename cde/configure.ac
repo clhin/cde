@@ -745,6 +745,7 @@ programs/dtcalc/Makefile
 programs/dtaction/Makefile
 
 programs/dtspcd/Makefile
+programs/dtspcd/dtspcdenv
 
 programs/dtscreen/Makefile
 
