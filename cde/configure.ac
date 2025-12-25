@@ -774,6 +774,9 @@ programs/dtappintegrate/Makefile
 programs/dtappintegrate/dtappintegrate
 
 programs/dtprintegrate/Makefile
+programs/dtprintegrate/dtlp
+programs/dtprintegrate/dtlpsetup
+programs/dtprintegrate/dtprintegrate
 
 programs/dtconfig/Makefile
 programs/dtconfig/sun/Makefile

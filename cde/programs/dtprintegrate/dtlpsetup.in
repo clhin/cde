@@ -1,23 +1,23 @@
-XCOMM!/bin/sh
-XCOMM
-XCOMM $XConsortium: dtlpsetup.src /main/3 1996/04/23 12:01:59 drk $
-XCOMM
-XCOMM COMPONENT_NAME: desktop
-XCOMM
-XCOMM FUNCTIONS: dtlpsetup
-XCOMM
-XCOMM ORIGINS: 27 
-XCOMM
-XCOMM  (C) COPYRIGHT International Business Machines Corp. 1995
-XCOMM  All Rights Reserved
-XCOMM  US Government Users Restricted Rights - Use, duplication or
-XCOMM  disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
-XCOMM
-XCOMM
-XCOMM Add /usr/dt/lib/nls/msg/%L/%N.cat to NLSPATH
-XCOMM
+#!/bin/sh
+#
+# $XConsortium: dtlpsetup.src /main/3 1996/04/23 12:01:59 drk $
+#
+# COMPONENT_NAME: desktop
+#
+# FUNCTIONS: dtlpsetup
+#
+# ORIGINS: 27 
+#
+#  (C) COPYRIGHT International Business Machines Corp. 1995
+#  All Rights Reserved
+#  US Government Users Restricted Rights - Use, duplication or
+#  disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+#
+#
+# Add @CDE_INSTALLATION_TOP@/lib/nls/msg/%L/%N.cat to NLSPATH
+#
 
-NLSPATH=/usr/dt/lib/nls/msg/%L/%N.cat:$NLSPATH
+NLSPATH=@CDE_INSTALLATION_TOP@/lib/nls/msg/%L/%N.cat:$NLSPATH
 export NLSPATH
 
 usage="$0 [-b banner_title] [-d lpdest] [-f print_file] 
@@ -220,18 +220,18 @@ if  [ $NOT_SUPPORTED ]; then
 \t%1$s \n" "$ARGS"
 fi
 
-/usr/dt/bin/dtlp "$banner_title" "$lpdest" "$print_command" "$copy_count" "$other_options" "$user_filename" "$a" "$e" "$h" "$r" "$s" "$v" "$w" "$print_file"
+@CDE_INSTALLATION_TOP@/bin/dtlp "$banner_title" "$lpdest" "$print_command" "$copy_count" "$other_options" "$user_filename" "$a" "$e" "$h" "$r" "$s" "$v" "$w" "$print_file"
  
 status=$?
 
-XCOMM dtlp return code of 5 maps to return code 7 of dtlpsetup
+# dtlp return code of 5 maps to return code 7 of dtlpsetup
 if  [ $status -eq 5 ]
   then exit NO_VALID_FILE_ERR
-XCOMM dtlp return code of 6 maps to return code 8 of dtlpsetup
+# dtlp return code of 6 maps to return code 8 of dtlpsetup
 elif [ $status -eq 6 ]
   then exit NO_READ_FILE_ERR
 else
-XCOMM all others are synonomous
+# all others are synonomous
   exit $status
 fi
 
