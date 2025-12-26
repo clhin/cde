@@ -4,8 +4,7 @@ SUBDIRS = dtcopy
 
 bin_PROGRAMS = dtfile
 
-BUILT_SOURCES = dtfile.config dtfile_error
-CLEANFILES = dtfile.config dtfile_error
+CLEANFILES = dtfile.config dtfile_error dterror.ds
 
 dist_config_DATA = dtfile.config
 
@@ -40,20 +39,3 @@ dtfile_SOURCES = ChangeDir.c     ChangeDirP.c    Command.c       Common.c \
 		 ModAttr.c       ModAttrP.c      MultiView.c     OverWrite.c \
 		 Prefs.c         PrefsP.c        SharedMsgs.c    SharedProcs.c \
 		 ToolTalk.c      Trash.c         Utils.c         fsDialog.c
-
-# Mind the quoting here...
-SCRIPTFLAGS = -DSHAPE -D_ILS_MACROS -DSUN_PERF \
-	-DCDE_INSTALLATION_TOP="$(CDE_INSTALLATION_TOP)" \
-	-DCDE_CONFIGURATION_TOP="$(CDE_CONFIGURATION_TOP)"
-
-dtfile.config: dtfile.config.cpp
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(SCRIPTFLAGS) $< > $@
-
-dtfile_error: dtfile_error.cpp
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(SCRIPTFLAGS) $<  > $@
-
-dterror.ds: dterror.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(SCRIPTFLAGS) $<  > $@

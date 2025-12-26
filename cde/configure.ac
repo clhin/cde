@@ -719,6 +719,9 @@ programs/dtmail/libDtMail/Common/Makefile
 programs/dtpad/Makefile
 
 programs/dtfile/Makefile
+programs/dtfile/dterror.ds
+programs/dtfile/dtfile.config
+programs/dtfile/dtfile_error
 programs/dtfile/dtcopy/Makefile
 
 programs/dtwm/Makefile
