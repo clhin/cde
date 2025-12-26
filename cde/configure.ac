@@ -729,6 +729,7 @@ programs/dtsession/Makefile
 programs/dtsession/config/Makefile
 
 programs/dthello/Makefile
+programs/dthello/Dthello
 
 programs/dtstyle/Makefile
 

@@ -1,23 +1,18 @@
 MAINTAINERCLEANFILES = Makefile.in
 
+appdefaultsdir = $(CDE_INSTALLATION_TOP)/app-defaults/C
+
 bin_PROGRAMS = dthello
 
-dthello_LDADD = $(DTCLIENTLIBS) $(XTOOLLIB)
+dthello_LDADD = $(DTCLIENTLIBS) $(XTOOLLIB) $(TIRPCLIB)
 
 if SOLARIS
 dthello_LDADD += -lgen
 endif
 
-if LINUX
-dthello_LDADD += $(TIRPCLIB)
-endif
-
 dthello_SOURCES = dthello.c
 
-CPP_TARGETS = Dthello
-BUILT_SOURCES = $(CPP_TARGETS)
-CLEANFILES = $(CPP_TARGETS)
+dist_appdefaults_DATA = Dthello
 
-Dthello: Dthello.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=#  $< > $@
+CPP_TARGETS = Dthello
+CLEANFILES = $(CPP_TARGETS)
