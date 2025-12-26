@@ -706,6 +706,7 @@ programs/dthelp/parser/pass2/eltdef/Makefile
 programs/dthelp/parser/pass2/htag2/Makefile
 programs/dthelp/parser/pass2/parser/Makefile
 programs/dthelp/parser/helptag/Makefile
+programs/dthelp/parser/helptag/dthelptag
 
 programs/dtmail/Makefile
 programs/dtmail/dtmail/Makefile

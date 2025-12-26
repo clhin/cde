@@ -1,20 +1,17 @@
-XCOMM! /bin/sh
-XCOMM $XConsortium: helptag.cpp /main/5 1996/04/23 11:26:23 drk $
-XCOMM dthelptag 
-XCOMM
-XCOMM Info for 'what' strings ...
-XCOMM
-XCOMM @(#) (c) Copyright 1996 Digital Equipment Corporation.
-XCOMM @(#) (c) Copyright 1986-1993,1996 Hewlett-Packard Company.
-XCOMM @(#) (c) Copyright 1996 International Business Machines Corp.
-XCOMM @(#) (c) Copyright 1996 Sun Microsystems, Inc.
-XCOMM @(#) (c) Copyright 1996 Novell, Inc. 
-XCOMM @(#) (c) Copyright 1996 FUJITSU LIMITED.
-XCOMM @(#) (c) Copyright 1996 Hitachi.
+#!/bin/sh
+# $XConsortium: helptag.cpp /main/5 1996/04/23 11:26:23 drk $
+# dthelptag 
+#
+# Info for 'what' strings ...
+#
+# @(#) (c) Copyright 1996 Digital Equipment Corporation.
+# @(#) (c) Copyright 1986-1993,1996 Hewlett-Packard Company.
+# @(#) (c) Copyright 1996 International Business Machines Corp.
+# @(#) (c) Copyright 1996 Sun Microsystems, Inc.
+# @(#) (c) Copyright 1996 Novell, Inc. 
+# @(#) (c) Copyright 1996 FUJITSU LIMITED.
+# @(#) (c) Copyright 1996 Hitachi.
 
-#define HASH #
-
-#ifndef ReleaseTree
 USESYSTEMUTILS=${USESYSTEMUTILS:-"YES"}
 if [ $USESYSTEMUTILS = "YES" ]
 then
@@ -26,11 +23,6 @@ else
    HELPTAGCANON1=${ALT_HELPTAGCANON1:-dthelp_ctag1}
    HELPTAGPASS2=${ALT_HELPTAGPASS2:-dthelp_htag2}
 fi
-#else
- HELPTAGPASS1=dthelp_htag1
- HELPTAGCANON1=dthelp_ctag1
- HELPTAGPASS2=dthelp_htag2
-#endif
 
 RM="rm -f "
 
@@ -42,11 +34,11 @@ optlist=""
 export optlist tagname extension
 export directory statfile 
 
-XCOMM clean up if the user interrupts this script
+# clean up if the user interrupts this script
 bailout(){
-  HASH Remove the stat file ...
+  # Remove the stat file ...
   rm $statfile 2> /dev/null
-  HASH Remove the intermediate files if necessary...
+  # Remove the intermediate files if necessary...
   if [ "$save" != yes ]
   then
     $RM $workfile.'snb'
@@ -64,11 +56,11 @@ then
   exit 2
 fi
 
-XCOMM determine what behavior we have from basename(1).  On some systems,
-XCOMM the second parameter to basename(1) is a simple string; on others,
-XCOMM it's a regular expression.  Since we want to find out if our input
-XCOMM file name ends in ".", we need to use either "\." or "." depending
-XCOMM on whether the "." is taken as an RE or a string.
+# determine what behavior we have from basename(1).  On some systems,
+# the second parameter to basename(1) is a simple string; on others,
+# it's a regular expression.  Since we want to find out if our input
+# file name ends in ".", we need to use either "\." or "." depending
+# on whether the "." is taken as an RE or a string.
 string=`basename string .`
 if [ $string = string ]
 then
@@ -77,9 +69,9 @@ else
   dotsuffix=\\.
 fi
 
-XCOMM function to return extension, if any of a file name.
-XCOMM when called, the file name should already have been broken into parts
-XCOMM at any periods.
+# function to return extension, if any of a file name.
+# when called, the file name should already have been broken into parts
+# at any periods.
 split_name()
 {
 if [ $# -eq 0 ]
@@ -95,8 +87,8 @@ fi
 }
 
 
-XCOMM function to return last part of a multi-part word.
-XCOMM when called, the word should already have been broken into parts.
+# function to return last part of a multi-part word.
+# when called, the word should already have been broken into parts.
 get_tail()
 {
 if [ $# -eq 0 ]
@@ -112,40 +104,40 @@ fi
 }
 
 
-XCOMM function used to simply return the positional parameters to their
-XCOMM original state, i.e., what they were before calling "split_name"
-XCOMM or "get_tail".
+# function used to simply return the positional parameters to their
+# original state, i.e., what they were before calling "split_name"
+# or "get_tail".
 reset()
 {
 true
 }
 
 
-XCOMM function to parse a file name.
+# function to parse a file name.
 parse_name()
 {
-XCOMM don't try to get extension if file ends in period
+# don't try to get extension if file ends in period
 remdot=`basename "$1" $dotsuffix`
 predot=`basename "$1"`
 if [ "$remdot" = "$predot" ]
 then
-  HASH save original parameters and field separators
+  # save original parameters and field separators
   saveParm="$*"
   saveIFS="$IFS"
 
-  HASH cause the file name to be split at slashes (remove directories)
+  # cause the file name to be split at slashes (remove directories)
   IFS=/
   p=$1
   get_tail $p
 
-  HASH cause file name to be split at periods
+  # cause file name to be split at periods
   IFS=.
   q=$tail
 
-  HASH get the extension, if any
+  # get the extension, if any
   split_name $q
 
-  HASH restore original field separators and file name
+  # restore original field separators and file name
   IFS="$saveIFS"
   reset "$saveParm"
 else
@@ -153,10 +145,10 @@ else
   tagname="$remdot"
 fi
 
-XCOMM get the directory, will be "." if none
+# get the directory, will be "." if none
 directory=`dirname $1`
 
-XCOMM get the file base name and remove trailing period, if any and no extension
+# get the file base name and remove trailing period, if any and no extension
 tagname=`basename $1 $extension`
 if [ "$extension" = "" ]
 then
@@ -165,7 +157,7 @@ fi
 }
 
 
-XCOMM Check command line for options:
+# Check command line for options:
 gotfile=no
 defaultextension=".htg"
 compression="no"
@@ -202,7 +194,7 @@ do
       for commandline
       do 
         echo "Deleting HelpTag-generated files for $commandline"
-        HASH check for .htg or .ctg extension
+        # check for .htg or .ctg extension
 	saveCommandLine="$*"
 	parse_name $commandline
 	reset $saveCommandLine
@@ -304,17 +296,17 @@ then
   exit 2
 fi
 
-XCOMM Analyze file name:
-XCOMM   if no extension -> append .htg or .ctg
-XCOMM   if extension -> use as is
-XCOMM   if trailing . -> use without extension
+# Analyze file name:
+#   if no extension -> append .htg or .ctg
+#   if extension -> use as is
+#   if trailing . -> use without extension
 parse_name $tagname
 if [ "$extension" = "" ]
 then
   extension="$defaultextension"
 fi
 
-XCOMM see if tag file exists
+# see if tag file exists
 if [ ! -r $directory/$tagname$extension ]
 then
   echo File $directory/$tagname$extension not found or not readable.
@@ -322,12 +314,12 @@ then
 fi
 
 
-XCOMM Remove old status file, if any.
+# Remove old status file, if any.
 statfile="$directory/.$tagname.st"
 $RM $statfile
 
 
-XCOMM Do we want a list of the files declared through entities?
+# Do we want a list of the files declared through entities?
 if [ "$listfiles" = yes ]
 then
   echo ""
@@ -338,7 +330,7 @@ then
 fi
 
 
-XCOMM Check write access to current directory
+# Check write access to current directory
 (echo "testing" > $statfile)
 if [ $? -gt 0 ]
 then
@@ -348,7 +340,7 @@ then
 fi
 
 
-XCOMM Should the parser ignore writer memos?
+# Should the parser ignore writer memos?
 if [ "$memo" = yes ]
 then
   optlist="$optlist memo"
@@ -358,7 +350,7 @@ then
 fi
 
 
-XCOMM Does the user wish to truncate file names for portability?
+# Does the user wish to truncate file names for portability?
 if [ "$shortnames" = "yes" ]
 then
   optlist="$optlist short"
@@ -368,7 +360,7 @@ else
 fi
 workfile=$directory/$workfile
 
-XCOMM Remove the error file, if any
+# Remove the error file, if any
 $RM ${workfile}.err
 
 if [ "$background" = "no" ]
@@ -378,7 +370,7 @@ else
     moreinfo="  See file ${workfile}.err for more information."
 fi
 
-XCOMM Write the header (time stamp, etc.) to the status file.
+# Write the header (time stamp, etc.) to the status file.
 echo "HelpTag Version B.00.00"  > $statfile
 echo `date` >> $statfile
 if [ "$background" = no ]
@@ -388,7 +380,7 @@ fi
 
 if [ \( "$compression" = "no" \) -a \( "$decompression" = "no" \) ]
 then
-  HASH Call the parser with the appropriate options.  
+  # Call the parser with the appropriate options.  
   echo "Starting HelpTag parser ($HELPTAGPASS1)." >> $statfile
   if [ "$background" = no ]
   then
@@ -412,7 +404,7 @@ then
 	$RM $workfile.'snb'
 	$RM $workfile.'idx'
       fi
-      HASH Remove the stat file ...
+      # Remove the stat file ...
       rm $statfile 2> /dev/null
       exit 1
     fi
@@ -435,13 +427,13 @@ then
 	$RM $workfile.'snb'
 	$RM $workfile.'idx'
       fi
-      HASH Remove the stat file ...
+      # Remove the stat file ...
       rm $statfile 2> /dev/null
       exit 1
     fi
   fi
 
-  HASH If there were parser errors, report them to the status file, and stdout.
+  # If there were parser errors, report them to the status file, and stdout.
   echo "Parser done. \c" >> $statfile
   if [ $trouble -gt 0 ]
   then
@@ -465,7 +457,7 @@ then
 fi
 
 
-XCOMM Run the pass2 utility to create the <loids>, <index>, and <snb>
+# Run the pass2 utility to create the <loids>, <index>, and <snb>
 echo "Running $HELPTAGPASS2 to create the generated elements." >> $statfile
 if [ "$background" = "no" ]
 then
@@ -524,7 +516,7 @@ then
     $RM $workfile.'snb'
     $RM $workfile.'idx'
   fi
-  HASH Remove the stat file ...
+  # Remove the stat file ...
   rm $statfile 2> /dev/null
   exit 1
 fi
@@ -536,8 +528,8 @@ then
 fi
 
 
-XCOMM Remove the intermediate files ...
-XCOMM Note: currently the save option is set to save no intermediate files ...
+# Remove the intermediate files ...
+# Note: currently the save option is set to save no intermediate files ...
 if [ "$background" = "no" ]
 then
   echo "Removing intermediate files."
@@ -551,6 +543,6 @@ then
 fi
 
 
-XCOMM All done ...
+# All done ...
 echo DONE >> $statfile
 echo "Done."
