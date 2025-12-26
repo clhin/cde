@@ -1,41 +1,41 @@
-XCOMM! CDE_INSTALLATION_TOP/bin/dtksh
-XCOMM $XConsortium: SessionTest.src /main/6 1996/04/23 20:18:46 drk $
+#!@CDE_INSTALLATION_TOP@/bin/dtksh
+# $XConsortium: SessionTest.src /main/6 1996/04/23 20:18:46 drk $
 
-XCOMM #########################################################################
-XCOMM   (c) Copyright 1993, 1994 Hewlett-Packard Company	
-XCOMM   (c) Copyright 1993, 1994 International Business Machines Corp.
-XCOMM   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
-XCOMM   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
-XCOMM       Novell, Inc.
-XCOMM #########################################################################
-
-
-XCOMM 
-XCOMM  This sample shell script demonstrates the steps necessary for tying into
-XCOMM  session management.  To run, simply run this script, and then save the
-XCOMM  current session.  When the session is restored, this script should again
-XCOMM  restore to its previous state.
-XCOMM 
+# #########################################################################
+#   (c) Copyright 1993, 1994 Hewlett-Packard Company	
+#   (c) Copyright 1993, 1994 International Business Machines Corp.
+#   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
+#   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
+#       Novell, Inc.
+# #########################################################################
 
 
-XCOMM  This function is invoked when the user attempts to save the current session.
-XCOMM  It will save off its state information (whether it is iconified, and the
-XCOMM  list of workspaces it occupies) into a session file, and then tell the
-XCOMM  session manager how to reinvoke it when the session is restored.
+# 
+#  This sample shell script demonstrates the steps necessary for tying into
+#  session management.  To run, simply run this script, and then save the
+#  current session.  When the session is restored, this script should again
+#  restore to its previous state.
+# 
+
+
+#  This function is invoked when the user attempts to save the current session.
+#  It will save off its state information (whether it is iconified, and the
+#  list of workspaces it occupies) into a session file, and then tell the
+#  session manager how to reinvoke it when the session is restored.
 SessionCallback()
 {
-XCOMM   Get the name of our session file
+#   Get the name of our session file
    if DtSessionSavePath $TOPLEVEL PATH SAVEFILE; then
       exec 9>$PATH
 
-XCOMM      Save our iconification state
+#      Save our iconification state
       if DtShellIsIconified $TOPLEVEL ; then
          print -u9 'Iconified'
       else
          print -u9 'Deiconified'
       fi
 
-XCOMM      Save the list of workspace we occupy
+#      Save the list of workspace we occupy
       if DtWsmGetWorkspacesOccupied $(XtDisplay "-" $TOPLEVEL) \
                                     $(XtWindow "-" $TOPLEVEL) \
                                     CURRENT_WS_LIST ;
@@ -52,7 +52,7 @@ XCOMM      Save the list of workspace we occupy
 
       exec 9<&-
 
-XCOMM      Tell the session manager how to restart us
+#      Tell the session manager how to restart us
       DtSetStartupCommand $TOPLEVEL \
 		   "/usr/dt/share/examples/dtksh/SessionTest $SAVEFILE"
    else
@@ -62,24 +62,24 @@ XCOMM      Tell the session manager how to restart us
 }
 
 
-XCOMM  This function is invoked when we are restarted at session restore time.
-XCOMM  It is passed the name of the session file as $1.  It will extract our
-XCOMM  session information from the session file, and will restore our state
-XCOMM  accordingly.
+#  This function is invoked when we are restarted at session restore time.
+#  It is passed the name of the session file as $1.  It will extract our
+#  session information from the session file, and will restore our state
+#  accordingly.
 RestoreSession()
 {
-XCOMM   Get the full path of our session file
+#   Get the full path of our session file
    if DtSessionRestorePath $TOPLEVEL PATH $1; then
       exec 9<$PATH
       read -u9 ICONIFY
 
-XCOMM      Restore our iconification state
+#      Restore our iconification state
       case $ICONIFY in
          Iconified) DtSetIconifyHint $TOPLEVEL True;;
          *)         DtSetIconifyHint $TOPLEVEL False;;
       esac
 
-XCOMM      Place us into the indicated set of workspaces
+#      Place us into the indicated set of workspaces
       WS_LIST=""
       while read -u9 NAME
       do
@@ -104,7 +104,7 @@ XCOMM      Place us into the indicated set of workspaces
 
 
 
-XCOMM ###################### Create the Main UI ###############################
+# ###################### Create the Main UI ###############################
 
 XtInitialize TOPLEVEL wmProtTest WmProtTest "$0" "$@"
 
@@ -114,9 +114,9 @@ XtSetValues $DA height:200 width:200
 XmInternAtom SAVE_SESSION_ATOM $(XtDisplay "-" $TOPLEVEL) "WM_SAVE_YOURSELF" False
 
 
-XCOMM  If we are invoked with any command line parameters, then we will assume
-XCOMM  that it is the name of our session file, and will restore to the indicated
-XCOMM  state.
+#  If we are invoked with any command line parameters, then we will assume
+#  that it is the name of our session file, and will restore to the indicated
+#  state.
 if (( $# > 0))
 then
    XtSetValues $TOPLEVEL mappedWhenManaged:False
@@ -130,7 +130,7 @@ else
    XSync $(XtDisplay "-" $TOPLEVEL) False
 fi
 
-XCOMM  Register our interest in participating in session management.
+#  Register our interest in participating in session management.
 XmAddWMProtocols $TOPLEVEL $SAVE_SESSION_ATOM
 XmAddWMProtocolCallback $TOPLEVEL $SAVE_SESSION_ATOM SessionCallback
 

@@ -1,28 +1,28 @@
-XCOMM! CDE_INSTALLATION_TOP/bin/dtksh
-XCOMM  $XConsortium: crMovesText1.src /main/3 1996/04/23 20:19:33 drk $
+#!@CDE_INSTALLATION_TOP@/bin/dtksh
+#  $XConsortium: crMovesText1.src /main/3 1996/04/23 20:19:33 drk $
 
-XCOMM #########################################################################
-XCOMM   (c) Copyright 1993, 1994 Hewlett-Packard Company	
-XCOMM   (c) Copyright 1993, 1994 International Business Machines Corp.
-XCOMM   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
-XCOMM   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
-XCOMM       Novell, Inc.
-XCOMM #########################################################################
+# #########################################################################
+#   (c) Copyright 1993, 1994 Hewlett-Packard Company	
+#   (c) Copyright 1993, 1994 International Business Machines Corp.
+#   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
+#   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
+#       Novell, Inc.
+# #########################################################################
 
 
-XCOMM 
-XCOMM  This advanced shell script demonstrates the code necessary for forcing
-XCOMM  the Return key to move the focus to the next text field in a dialog,
-XCOMM  instead of causing the default pushbutton to be activated.  When the
-XCOMM  focus has moved to the last text field, then the Return key will activate
-XCOMM  the default pushbutton.
-XCOMM 
+# 
+#  This advanced shell script demonstrates the code necessary for forcing
+#  the Return key to move the focus to the next text field in a dialog,
+#  instead of causing the default pushbutton to be activated.  When the
+#  focus has moved to the last text field, then the Return key will activate
+#  the default pushbutton.
+# 
 
-XCOMM  This function modifies the text field indicated by $1, so that when
-XCOMM  the text field receives the focus, it clears the default button; when
-XCOMM  it loses the focus, it will reenable the default button.  It also adds
-XCOMM  some translations for catching the Return key, so that it can force
-XCOMM  the focus to the next text widget, which is indicated by $2
+#  This function modifies the text field indicated by $1, so that when
+#  the text field receives the focus, it clears the default button; when
+#  it loses the focus, it will reenable the default button.  It also adds
+#  some translations for catching the Return key, so that it can force
+#  the focus to the next text widget, which is indicated by $2
 SetCrControls()
 {
    XtAddCallback $1 focusCallback "ClearDftButton"
@@ -33,20 +33,20 @@ SetCrControls()
 	<Key>Return:ksh_eval(\"XmProcessTraversal $2 TRAVERSE_CURRENT\")"
 }
 
-XCOMM  FocusOut Callback: reenables the default button
+#  FocusOut Callback: reenables the default button
 SetDftButton()
 {
    XtSetValues $FORM defaultButton:$OK
 }
 
-XCOMM  FocusIn Callback: disables the default button
+#  FocusIn Callback: disables the default button
 ClearDftButton()
 {
    XtSetValues $FORM defaultButton:NULL
 }
 
-XCOMM  If the 'Ok' button is activated, but the 'Name' field is empty, then
-XCOMM  this function will display an error dialog.
+#  If the 'Ok' button is activated, but the 'Name' field is empty, then
+#  this function will display an error dialog.
 EmptyNameError()
 {
    XmCreateErrorDialog ERROR_DIALOG $TOPLEVEL noName \
@@ -61,14 +61,14 @@ EmptyNameError()
    XtManageChildren $ERROR_DIALOG
 }
 
-XCOMM  Pushbutton Callback: attached to the 'Cancel' pushbutton
+#  Pushbutton Callback: attached to the 'Cancel' pushbutton
 QuitCB()
 {
    exit 0
 }
 
-XCOMM  Pushbutton Callback: attached to the default pushbutton.  It extracts the
-XCOMM                       fields within the dialog, and does some validation.
+#  Pushbutton Callback: attached to the default pushbutton.  It extracts the
+#                       fields within the dialog, and does some validation.
 CheckActionValues()
 {
    XtGetValues $LARGEICON value:LARGEICON_VALUE
@@ -94,7 +94,7 @@ CheckActionValues()
    fi
 }
 
-XCOMM ###################### Create the Main UI ###############################
+# ###################### Create the Main UI ###############################
 
 XtInitialize TOPLEVEL createAction CreateAction "$0" "$@"
 XtCreateManagedWidget FORM form XmForm $TOPLEVEL 
@@ -317,7 +317,7 @@ XtSetValues $FORM \
 	navigationType:EXCLUSIVE_TAB_GROUP \
 	initialFocus:$NAME 
 
-XCOMM  Set up proper behavior for the Return key
+#  Set up proper behavior for the Return key
 SetCrControls $NAME         $COMMANDLINE 
 SetCrControls $COMMANDLINE  $PROMPT 
 SetCrControls $PROMPT       $LARGEICON 

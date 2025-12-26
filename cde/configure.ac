@@ -759,6 +759,23 @@ programs/dtscreen/Dtscreen
 
 programs/dtksh/Makefile
 programs/dtksh/examples/Makefile
+programs/dtksh/examples/CallDataTest4
+programs/dtksh/examples/CallbackTest2
+programs/dtksh/examples/DtWsTest1
+programs/dtksh/examples/EventHandlerTest
+programs/dtksh/examples/ListBounds1
+programs/dtksh/examples/ListItemPos1
+programs/dtksh/examples/PopupTest
+programs/dtksh/examples/SelBoxResTest
+programs/dtksh/examples/SessionTest
+programs/dtksh/examples/TextCutBuf1
+programs/dtksh/examples/TextDisp1
+programs/dtksh/examples/TextFXYPos1
+programs/dtksh/examples/TransEventTest
+programs/dtksh/examples/TransTest1
+programs/dtksh/examples/WorkProcTest1
+programs/dtksh/examples/XdrawTest
+programs/dtksh/examples/crMovesText1
 
 programs/dtcm/Makefile
 programs/dtcm/libDtCmP/Makefile

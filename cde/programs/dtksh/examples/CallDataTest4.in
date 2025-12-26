@@ -1,34 +1,34 @@
-XCOMM! CDE_INSTALLATION_TOP/bin/dtksh
-XCOMM  $XConsortium: CallDataTest4.src /main/3 1996/04/23 20:17:51 drk $
+#!@CDE_INSTALLATION_TOP@/bin/dtksh
+#  $XConsortium: CallDataTest4.src /main/3 1996/04/23 20:17:51 drk $
 
-XCOMM #########################################################################
-XCOMM   (c) Copyright 1993, 1994 Hewlett-Packard Company	
-XCOMM   (c) Copyright 1993, 1994 International Business Machines Corp.
-XCOMM   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
-XCOMM   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
-XCOMM       Novell, Inc.
-XCOMM #########################################################################
+# #########################################################################
+#   (c) Copyright 1993, 1994 Hewlett-Packard Company	
+#   (c) Copyright 1993, 1994 International Business Machines Corp.
+#   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
+#   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
+#       Novell, Inc.
+# #########################################################################
 
 
-XCOMM 
-XCOMM  This sample shell script demonstrates how the CB_WIDGET and CB_CALL_DATA
-XCOMM  convenience environment variables can be referenced within a callback
-XCOMM  function.
-XCOMM 
+# 
+#  This sample shell script demonstrates how the CB_WIDGET and CB_CALL_DATA
+#  convenience environment variables can be referenced within a callback
+#  function.
+# 
 
-XCOMM  PushButton Callback: Forces the scale to reset to the origin
+#  PushButton Callback: Forces the scale to reset to the origin
 ResetScale()
 {
    XmScaleSetValue $SCALE 0
 }
 
-XCOMM  PushButton Callback: Forces the scale to its minimum value
+#  PushButton Callback: Forces the scale to its minimum value
 SetScaleMin()
 {
    XmScaleSetValue $SCALE -200
 }
 
-XCOMM  PushButton Callback: Forces the scale to its maximum value
+#  PushButton Callback: Forces the scale to its maximum value
 SetScaleMax()
 {
    XmScaleSetValue $SCALE 200
@@ -57,7 +57,7 @@ SetScaleMax()
 }
 
 
-XCOMM  Scale Callback: Invoked when the user interactively modified the scale value
+#  Scale Callback: Invoked when the user interactively modified the scale value
 ScaleValueChanged()
 {
    XmScaleGetValue $CB_WIDGET VALUE
@@ -73,7 +73,7 @@ ScaleValueChanged()
    echo
 }
 
-XCOMM ###################### Create the Main UI ###############################
+# ###################### Create the Main UI ###############################
 
 XtInitialize TOPLEVEL command1 Command1 "$0" "$@"
 

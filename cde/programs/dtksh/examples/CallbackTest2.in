@@ -1,35 +1,35 @@
-XCOMM! CDE_INSTALLATION_TOP/bin/dtksh
-XCOMM  $XConsortium: CallbackTest2.src /main/3 1996/04/23 20:17:57 drk $
+#!@CDE_INSTALLATION_TOP@/bin/dtksh
+#  $XConsortium: CallbackTest2.src /main/3 1996/04/23 20:17:57 drk $
 
-XCOMM #########################################################################
-XCOMM   (c) Copyright 1993, 1994 Hewlett-Packard Company	
-XCOMM   (c) Copyright 1993, 1994 International Business Machines Corp.
-XCOMM   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
-XCOMM   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
-XCOMM       Novell, Inc.
-XCOMM #########################################################################
+# #########################################################################
+#   (c) Copyright 1993, 1994 Hewlett-Packard Company	
+#   (c) Copyright 1993, 1994 International Business Machines Corp.
+#   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
+#   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
+#       Novell, Inc.
+# #########################################################################
 
 
-XCOMM 
-XCOMM  This sample shell script demonstrates how widget callbacks can be
-XCOMM  added and removed.  It adds callbacks both using XtAddCallback and
-XCOMM  by specifying a callback as a resource, when the test pushbutton
-XCOMM  is created.
-XCOMM 
+# 
+#  This sample shell script demonstrates how widget callbacks can be
+#  added and removed.  It adds callbacks both using XtAddCallback and
+#  by specifying a callback as a resource, when the test pushbutton
+#  is created.
+# 
 
-XCOMM  The activate callback which can be dynamically added and removed
+#  The activate callback which can be dynamically added and removed
 ActivateCallback1()
 {
    echo "activateCallback1 invoked"
 }
 
-XCOMM  The activate callback which is added when the widget was created
+#  The activate callback which is added when the widget was created
 ActivateCallback2()
 {
    echo "activateCallback2 invoked"
 }
 
-XCOMM  Pushbutton Callback: Adds an activate callback to the test pushbutton
+#  Pushbutton Callback: Adds an activate callback to the test pushbutton
 AddCallback1()
 {
    XtAddCallback $TESTPB activateCallback ActivateCallback1
@@ -37,7 +37,7 @@ AddCallback1()
    echo "Callback list = "$AC
 }
 
-XCOMM  Pushbutton Callback: Removes an activate callback from the test pushbutton
+#  Pushbutton Callback: Removes an activate callback from the test pushbutton
 DeleteCallback1()
 {
    XtRemoveCallback $TESTPB activateCallback ActivateCallback1
@@ -45,7 +45,7 @@ DeleteCallback1()
    echo "Callback list = "$AC2
 }
 
-XCOMM ###################### Create the Main UI ###############################
+# ###################### Create the Main UI ###############################
 
 XtInitialize TOPLEVEL callbackTest CallbackTest "$0" "$@"
 

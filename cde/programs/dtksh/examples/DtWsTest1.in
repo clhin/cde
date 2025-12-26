@@ -1,34 +1,34 @@
-XCOMM! CDE_INSTALLATION_TOP/bin/dtksh
-XCOMM  $XConsortium: DtWsTest1.src /main/3 1996/04/23 20:18:06 drk $
+#!@CDE_INSTALLATION_TOP@/bin/dtksh
+#  $XConsortium: DtWsTest1.src /main/3 1996/04/23 20:18:06 drk $
 
-XCOMM #########################################################################
-XCOMM   (c) Copyright 1993, 1994 Hewlett-Packard Company	
-XCOMM   (c) Copyright 1993, 1994 International Business Machines Corp.
-XCOMM   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
-XCOMM   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
-XCOMM       Novell, Inc.
-XCOMM #########################################################################
+# #########################################################################
+#   (c) Copyright 1993, 1994 Hewlett-Packard Company	
+#   (c) Copyright 1993, 1994 International Business Machines Corp.
+#   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
+#   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
+#       Novell, Inc.
+# #########################################################################
 
 
-XCOMM 
-XCOMM  This sample shell script demonstrates how to interact with the workspace
-XCOMM  manager.  It demonstrates the following capabilities:
-XCOMM 
-XCOMM 	1) How to query which workspaces the widgets currently reside it.
-XCOMM 	2) How to set the current workspace.
-XCOMM 	3) How to be notified when the current workspace changes.
-XCOMM 
+# 
+#  This sample shell script demonstrates how to interact with the workspace
+#  manager.  It demonstrates the following capabilities:
+# 
+# 	1) How to query which workspaces the widgets currently reside it.
+# 	2) How to set the current workspace.
+# 	3) How to be notified when the current workspace changes.
+# 
 
 
 integer wsCount
 
-XCOMM  Pushbutton Callback: This function asks the workspace manager to change
-XCOMM                       to the workspace indicated by $1; $1 is an X atom
-XCOMM                       which identifies the new workspace.  At some point
-XCOMM                       after our request to the workspace manager, the
-XCOMM                       workspace manager will activate our WsCB function,
-XCOMM                       letting us know that the change has actually taken
-XCOMM                       place.
+#  Pushbutton Callback: This function asks the workspace manager to change
+#                       to the workspace indicated by $1; $1 is an X atom
+#                       which identifies the new workspace.  At some point
+#                       after our request to the workspace manager, the
+#                       workspace manager will activate our WsCB function,
+#                       letting us know that the change has actually taken
+#                       place.
 SetWorkspace()
 {
    echo
@@ -40,10 +40,10 @@ SetWorkspace()
    fi
 }
 
-XCOMM  Workspace Changed Callback: This function is invoked whenever the workspace
-XCOMM                              manager changes workspaces.  It will simply
-XCOMM                              query the 'name' of the new workspace, and
-XCOMM                              echo it outl
+#  Workspace Changed Callback: This function is invoked whenever the workspace
+#                              manager changes workspaces.  It will simply
+#                              query the 'name' of the new workspace, and
+#                              echo it outl
 WsCB()
 {
    DtWsmGetCurrentWorkspace $(XtDisplay "-" $TOPLEVEL) \
@@ -53,7 +53,7 @@ WsCB()
    echo "Change to workspace complete " $NAME  "("$NEW_ATOM")"
 }
 
-XCOMM ###################### Create the Main UI ###############################
+# ###################### Create the Main UI ###############################
 
 XtInitialize TOPLEVEL dtWsTest DtWsTest "$0" "$@"
 XtSetValues $TOPLEVEL allowShellResize:True
@@ -70,9 +70,9 @@ XtCreateManagedWidget RC rc XmRowColumn $TOPLEVEL2 \
          orientation:HORIZONTAL \
          packing:PACK_COLUMN 
 
-XCOMM  Get a list of all of the workspaces, and create a pushbutton for each one.
-XCOMM  When a pushbutton is activated, it will ask the workspace manager to
-XCOMM  change to the indicated workspace.
+#  Get a list of all of the workspaces, and create a pushbutton for each one.
+#  When a pushbutton is activated, it will ask the workspace manager to
+#  change to the indicated workspace.
 oldIF=$IFS
 if DtWsmGetWorkspaceList $(XtDisplay "-" $TOPLEVEL) \
                           $(XRootWindowOfScreen "-" $(XtScreen "-" $TOPLEVEL)) \
@@ -99,12 +99,12 @@ XtSetValues $RC numColumns:$wsCount
 XtRealizeWidget $TOPLEVEL2
 XSync $(XtDisplay "-" $TOPLEVEL) False
 
-XCOMM  The following block queries the initial set of workspaces occupied by
-XCOMM  this shell script; this list is printed out.  Next, it will ask the
-XCOMM  workspace manager to move the shell script windows into all workspaces.
-XCOMM  Lastly, it will again ask the workspace manager for the list of
-XCOMM  workspaces occupied by the shell script windows, and will again print
-XCOMM  out the list.
+#  The following block queries the initial set of workspaces occupied by
+#  this shell script; this list is printed out.  Next, it will ask the
+#  workspace manager to move the shell script windows into all workspaces.
+#  Lastly, it will again ask the workspace manager for the list of
+#  workspaces occupied by the shell script windows, and will again print
+#  out the list.
 if DtWsmGetWorkspacesOccupied $(XtDisplay "-" $TOPLEVEL) \
                                $(XtWindow "-" $TOPLEVEL) \
                                CURRENT_WS_LIST ;
@@ -134,7 +134,7 @@ fi
 
 XSync $(XtDisplay "-" $TOPLEVEL) False
 
-XCOMM  Print the new list of workspaces occupied
+#  Print the new list of workspaces occupied
 DtWsmGetWorkspacesOccupied $(XtDisplay "-" $TOPLEVEL) \
                             $(XtWindow "-" $TOPLEVEL) \
                             CURRENT_WS_LIST
@@ -149,7 +149,7 @@ done
 IFS=$oldIFS
 echo ""
 
-XCOMM  Add a callback to be notified whenever the workspace changes.
+#  Add a callback to be notified whenever the workspace changes.
 DtWsmAddCurrentWorkspaceCallback HANDLE1 $TOPLEVEL WsCB
 
 XtMainLoop

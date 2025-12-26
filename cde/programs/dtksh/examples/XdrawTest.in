@@ -1,19 +1,19 @@
-XCOMM! CDE_INSTALLATION_TOP/bin/dtksh
-XCOMM  $XConsortium: XdrawTest.src /main/3 1996/04/23 20:19:28 drk $
+#!@CDE_INSTALLATION_TOP@/bin/dtksh
+#  $XConsortium: XdrawTest.src /main/3 1996/04/23 20:19:28 drk $
 
-XCOMM #########################################################################
-XCOMM   (c) Copyright 1993, 1994 Hewlett-Packard Company	
-XCOMM   (c) Copyright 1993, 1994 International Business Machines Corp.
-XCOMM   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
-XCOMM   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
-XCOMM       Novell, Inc.
-XCOMM #########################################################################
+# #########################################################################
+#   (c) Copyright 1993, 1994 Hewlett-Packard Company	
+#   (c) Copyright 1993, 1994 International Business Machines Corp.
+#   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
+#   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
+#       Novell, Inc.
+# #########################################################################
 
 
-XCOMM 
-XCOMM  This sample shell script demonstrates the calling sequence for most of
-XCOMM  the X drawing commands.
-XCOMM 
+# 
+#  This sample shell script demonstrates the calling sequence for most of
+#  the X drawing commands.
+# 
 
 ExposeCallback()
 {
@@ -80,7 +80,7 @@ ClearWindow()
 }
 
 
-XCOMM ###################### Create the Main UI ###############################
+# ###################### Create the Main UI ###############################
 
 XtInitialize TOPLEVEL drawingArea DrawingArea "$0" "$@"
 

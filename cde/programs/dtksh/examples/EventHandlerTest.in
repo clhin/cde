@@ -1,20 +1,20 @@
-XCOMM! CDE_INSTALLATION_TOP/bin/dtksh
-XCOMM  $XConsortium: EventHandlerTest.src /main/3 1996/04/23 20:18:10 drk $
+#!@CDE_INSTALLATION_TOP@/bin/dtksh
+#  $XConsortium: EventHandlerTest.src /main/3 1996/04/23 20:18:10 drk $
 
-XCOMM #########################################################################
-XCOMM   (c) Copyright 1993, 1994 Hewlett-Packard Company	
-XCOMM   (c) Copyright 1993, 1994 International Business Machines Corp.
-XCOMM   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
-XCOMM   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
-XCOMM       Novell, Inc.
-XCOMM #########################################################################
+# #########################################################################
+#   (c) Copyright 1993, 1994 Hewlett-Packard Company	
+#   (c) Copyright 1993, 1994 International Business Machines Corp.
+#   (c) Copyright 1993, 1994 Sun Microsystems, Inc.
+#   (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
+#       Novell, Inc.
+# #########################################################################
 
 
-XCOMM 
-XCOMM  This sample shell script demonstrates how event handlers can be added
-XCOMM  and removed.  It also demonstrates how the EH_WIDGET and EH_EVENT
-XCOMM  convenience environment variables can be referenced.
-XCOMM 
+# 
+#  This sample shell script demonstrates how event handlers can be added
+#  and removed.  It also demonstrates how the EH_WIDGET and EH_EVENT
+#  convenience environment variables can be referenced.
+# 
 
 
 EventHandler1()
@@ -33,55 +33,55 @@ EventHandler2()
    echo "event handler 1 invoked ("$1")"
 }
 
-XCOMM  PushbuttonCallback: Adds an event handler to the form widget
+#  PushbuttonCallback: Adds an event handler to the form widget
 AddMaskableEventHandler1()
 {
    XtAddEventHandler $FORM2 "Button2MotionMask" False \
 	 "EventHandler1 1"
 }
 
-XCOMM  PushbuttonCallback: Adds an event handler to the form widget
+#  PushbuttonCallback: Adds an event handler to the form widget
 AddMaskableEventHandler2()
 {
    XtAddEventHandler $FORM2 "ButtonPressMask|ButtonReleaseMask" False \
 	 "EventHandler1 1"
 }
 
-XCOMM  PushbuttonCallback: Adds an event handler to the form widget
+#  PushbuttonCallback: Adds an event handler to the form widget
 AddMaskableEventHandler3()
 {
    XtAddEventHandler $FORM2 "Button2MotionMask" False \
 	 "EventHandler1 2"
 }
 
-XCOMM  PushbuttonCallback: Adds an event handler to the form widget
+#  PushbuttonCallback: Adds an event handler to the form widget
 AddNonmaskableEventHandler()
 {
    XtAddEventHandler $FORM2 "NoEventMask" True "EventHandler2 1"
 }
 
-XCOMM  PushbuttonCallback: Adds an event handler to the form widget.
-XCOMM                      Should report a bad event mask.
+#  PushbuttonCallback: Adds an event handler to the form widget.
+#                      Should report a bad event mask.
 AddBadEventHandler()
 {
    XtAddEventHandler $FORM2 "fooMask" False "EventHandler2 1"
 }
 
-XCOMM  PushbuttonCallback: Removes an event handler to the form widget
+#  PushbuttonCallback: Removes an event handler to the form widget
 RemoveEventHandler1()
 {
    XtRemoveEventHandler $FORM2 "Button2MotionMask" False \
 	 "EventHandler1 1"
 }
 
-XCOMM  PushbuttonCallback: Removes an event handler to the form widget
+#  PushbuttonCallback: Removes an event handler to the form widget
 RemoveEventHandler2()
 {
    XtRemoveEventHandler $FORM2 "ButtonPressMask|ButtonReleaseMask" False \
 	 "EventHandler1 1"
 }
 
-XCOMM  PushbuttonCallback: Removes an event handler to the form widget
+#  PushbuttonCallback: Removes an event handler to the form widget
 RemoveEventHandler1and2()
 {
    XtRemoveEventHandler $FORM2 "XtAllEvents" True "EventHandler1 1"
@@ -89,7 +89,7 @@ RemoveEventHandler1and2()
 
 
 
-XCOMM ###################### Create the Main UI ###############################
+# ###################### Create the Main UI ###############################
 
 XtInitialize TOPLEVEL eventHandlerTest EventHandlerTest "$0" "$@"
 
