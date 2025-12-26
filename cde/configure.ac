@@ -733,6 +733,9 @@ programs/dthello/Makefile
 programs/dthello/Dthello
 
 programs/dtstyle/Makefile
+programs/dtstyle/Dtstyle
+programs/dtstyle/Backdrops
+programs/dtstyle/Palettes
 
 programs/dtexec/Makefile
 

@@ -16,7 +16,7 @@
 !#
 !######################################################################
 
-XCOMM include "Dt"
+# include "Dt"
 
 !###
 !#
@@ -38,7 +38,7 @@ Dtstyle*mainRC.orientation:         HORIZONTAL
 !# Font resource values must be a valid interface font alias name.
 !#
 !# Font resource values must match exactly the default font resources
-!# specified in CDE_INSTALLATION_TOP/%L/sys.fonts.
+!# specified in @CDE_INSTALLATION_TOP@/%L/sys.fonts.
 !# 
 !# Do not translate the following
 !###
