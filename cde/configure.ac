@@ -798,6 +798,7 @@ programs/fontaliases/Makefile
 programs/dtdspmsg/Makefile
 
 programs/ttsnoop/Makefile
+programs/ttsnoop/Ttsnoop
 
 programs/dtimsstart/Makefile
 programs/dtimsstart/0020.dtims

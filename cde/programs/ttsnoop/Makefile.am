@@ -171,7 +171,3 @@ ttsnoop.C ttsnoop.h dtb_utils.c dtb_utils.h: ttsnoop.bip ttsnoop.C.src
 	-e 's/\(if( (cp=strrchr\)/if (_DtHelped( help_dialog)) return;\1/' \
 	dtb_utils.c > dtb_utils.c.patched
 	mv dtb_utils.c.patched dtb_utils.c
-
-Ttsnoop: Ttsnoop.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(LOCAL_CPP_DEFINES) $< > $@
