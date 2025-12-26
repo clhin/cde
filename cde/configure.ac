@@ -759,6 +759,8 @@ programs/dtcm/server/Makefile
 programs/dtcm/dtcm/Makefile
 
 programs/dtsearchpath/Makefile
+programs/dtsearchpath/0010.dtpaths
+programs/dtsearchpath/0030.dttmpdir
 programs/dtsearchpath/libCliSrv/Makefile
 programs/dtsearchpath/dtsp/Makefile
 programs/dtsearchpath/dtappg/Makefile
