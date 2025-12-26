@@ -722,6 +722,8 @@ programs/dtfile/Makefile
 programs/dtfile/dtcopy/Makefile
 
 programs/dtwm/Makefile
+programs/dtwm/sys.dtwmrc
+programs/dtwm/Dtwm.defs
 
 programs/dtlogin/Makefile
 programs/dtlogin/config/Makefile

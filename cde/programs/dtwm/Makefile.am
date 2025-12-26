@@ -5,7 +5,6 @@ bin_PROGRAMS = dtwm dtfplist
 configdir = $(CDE_INSTALLATION_TOP)/config/C
 dist_config_DATA = sys.dtwmrc
 
-BUILT_SOURCES = sys.dtwmrc Dtwm.defs
 CLEANFILES = sys.dtwmrc Dtwm.defs
 
 AM_CPPFLAGS = -DLARGECURSORS -DR2_COMPAT -DOPAQUE -DSHAPE -DUNMAP_ON_RESTART \
@@ -39,15 +38,3 @@ dtwm_SOURCES = WmCDInfo.c      WmCDecor.c      WmCEvent.c \
                WmPresence.c    WmWrkspace.c    WmXSMP.c
 
 dtfplist_SOURCES = Print.c Parse.c DataBaseLoad.c WmParse.c Session.c
-
-SCRIPTFLAGS = -DCDE_INSTALLATION_TOP=$(CDE_INSTALLATION_TOP) \
-              -DCDE_CONFIGURATION_TOP=$(CDE_CONFIGURATION_TOP)
-
-Dtwm.defs: Dtwm.defs.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(SCRIPTFLAGS) $< > $@
-
-sys.dtwmrc: sys.dtwmrc.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(SCRIPTFLAGS) $< > $@
-

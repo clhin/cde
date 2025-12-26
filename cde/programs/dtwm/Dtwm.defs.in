@@ -14,7 +14,7 @@
 !#
 !######################################################################
 
-XCOMM include "Dt"
+# include "Dt"
 
 !###
 !#   Ensure that we will have a front panel.
@@ -191,16 +191,6 @@ Dtwm*Mail*fileName:	     			/var/mail/$LOGNAME
 !# Default is "fixed" for all resolutions.
 !#
 !####
-#ifdef _AIX
-Dtwm*FrontPanel*highResFontList: \
-    %|nls-7-#highResFontList#|
-
-Dtwm*FrontPanel*mediumResFontList: \
-    %|nls-8-#mediumResFontList#|
-
-Dtwm*FrontPanel*lowResFontList: \
-    %|nls-9-#lowResFontList#|
-#else
 Dtwm*FrontPanel*highResFontList: \
     %|nls-17-#highResFontList#|
 
@@ -209,7 +199,6 @@ Dtwm*FrontPanel*mediumResFontList: \
 
 Dtwm*FrontPanel*lowResFontList: \
     %|nls-19-#lowResFontList#|
-#endif
 
 !###
 !#
