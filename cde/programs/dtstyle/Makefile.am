@@ -23,10 +23,6 @@ if SOLARIS
 dtstyle_SOURCES += OWsync.c
 endif
 
-appdefaultsdir = $(CDE_CONFIGURATION_TOP)/app-defaults/C
-
-dist_appdefaults_DATA = Dtstyle
-
 CPP_TARGETS = Dtstyle Backdrops Palettes
 
 CLEANFILES = $(CPP_TARGETS)
