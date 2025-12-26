@@ -5,7 +5,7 @@ SUBDIRS = backdrops icons dsdm dtmail dtpad dtfile dtwm dtlogin		\
         dtcalc dtaction dtspcd dtscreen dtksh dtcm dtsearchpath		\
         dtappbuilder palettes dtappintegrate dtprintegrate dtconfig	\
         dtcreate dtprintinfo fontaliases dtdspmsg ttsnoop dtimsstart	\
-        dtpdm dtsr dtpdmd dtinfo types tttypes util dtopen localized	\
+        dtpdm dtsr dtpdmd dtinfo tttypes util dtopen localized	\
         dthelp dtdocbook
 
 install-data-hook:
