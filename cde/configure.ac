@@ -748,6 +748,7 @@ programs/dtspcd/Makefile
 programs/dtspcd/dtspcdenv
 
 programs/dtscreen/Makefile
+programs/dtscreen/Dtscreen
 
 programs/dtksh/Makefile
 programs/dtksh/examples/Makefile
