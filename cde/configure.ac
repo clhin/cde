@@ -781,6 +781,8 @@ programs/dtprintegrate/dtprintegrate
 
 programs/dtconfig/Makefile
 programs/dtconfig/sun/Makefile
+programs/dtconfig/sun/dtconfig
+programs/dtconfig/sun/dtlogin.rc
 
 programs/dtcreate/Makefile
 

@@ -1,27 +1,26 @@
-XCOMM!/bin/ksh
-XCOMM $XConsortium: dtconfig.src /main/5 1996/04/23 12:12:10 drk $
-XCOMM  (c) Copyright 1996 Digital Equipment Corporation.
-XCOMM  (c) Copyright 1993,1994,1996 Hewlett-Packard Company.
-XCOMM  (c) Copyright 1993,1994,1996 International Business Machines Corp.
-XCOMM  (c) Copyright 1993,1994,1996 Sun Microsystems, Inc.
-XCOMM  (c) Copyright 1993,1994,1996 Novell, Inc. 
-XCOMM  (c) Copyright 1996 FUJITSU LIMITED.
-XCOMM  (c) Copyright 1996 Hitachi.
-XCOMM  (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
-XCOMM      Novell, Inc.
-XCOMM
-XCOMM This version of the CDE dtconfig script is for use in the Solaris(TM)
-XCOMM operating environment.
-XCOMM
-XCOMM  Common Desktop Environment
-XCOMM
-XCOMM This script can be run after CDE installation to configure CDE within
-XCOMM the host platforms operating environment.  For example, when auto-start 
-XCOMM is selected, the CDE desktop login window will be displayed at end of the
-XCOMM workstation's power up boot cycle.
-XCOMM
-XCOMM Location:	CDE_INSTALLATION_TOP/bin/dtconfig 
-#define HASH #
+#!@KSH@
+# $XConsortium: dtconfig.src /main/5 1996/04/23 12:12:10 drk $
+#  (c) Copyright 1996 Digital Equipment Corporation.
+#  (c) Copyright 1993,1994,1996 Hewlett-Packard Company.
+#  (c) Copyright 1993,1994,1996 International Business Machines Corp.
+#  (c) Copyright 1993,1994,1996 Sun Microsystems, Inc.
+#  (c) Copyright 1993,1994,1996 Novell, Inc. 
+#  (c) Copyright 1996 FUJITSU LIMITED.
+#  (c) Copyright 1996 Hitachi.
+#  (c) Copyright 1993, 1994 Unix System Labs, Inc., a subsidiary of
+#      Novell, Inc.
+#
+# This version of the CDE dtconfig script is for use in the Solaris(TM)
+# operating environment.
+#
+#  Common Desktop Environment
+#
+# This script can be run after CDE installation to configure CDE within
+# the host platforms operating environment.  For example, when auto-start 
+# is selected, the CDE desktop login window will be displayed at end of the
+# workstation's power up boot cycle.
+#
+# Location:	@CDE_INSTALLATION_TOP@/bin/dtconfig 
 
 mode=$1
 arg_count=$#
@@ -29,9 +28,9 @@ prg_name=$0
 
 Message()
 {
-  HASH Message() - display message from dtconfig.cat
-  HASH   $1 - message id
-  HASH   $2 - fallback message text
+  # Message() - display message from dtconfig.cat
+  #   $1 - message id
+  #   $2 - fallback message text
 
   if [ -x $DTDSPMSG ]; then
 	$DTDSPMSG -s 20 dtconfig $1 "$2" "$3"
@@ -50,35 +49,35 @@ usage_error() {
     Message 4  "  $prg_name -kill     (kill dtlogin)" $prg_name
     Message 5  "  $prg_name -reset    (reset dtlogin)" $prg_name
     Message 6  "  $prg_name -p        (printer action update)" $prg_name
-    Message 25 "  $prg_name -inetd    (inetd.conf /usr/dt daemons)" $prg_name
+    Message 25 "  $prg_name -inetd    (inetd.conf @CDE_INSTALLATION_TOP@ daemons)" $prg_name
     Message 26 "  $prg_name -inetd.ow (inetd.conf /usr/openwin daemons)" $prg_name
     echo " "
 }
 
-XCOMM
-XCOMM Allow for configured and factory versions of dtlogin.rc
-XCOMM
+#
+# Allow for configured and factory versions of dtlogin.rc
+#
 
-if [ -f CDE_CONFIGURATION_TOP/config/dtlogin.rc ]
+if [ -f @CDE_CONFIGURATION_TOP@/config/dtlogin.rc ]
 then
-  RC_MASTER=CDE_CONFIGURATION_TOP/config/dtlogin.rc
-elif [ -f CDE_INSTALLATION_TOP/config/dtlogin.rc ]
+  RC_MASTER=@CDE_CONFIGURATION_TOP@/config/dtlogin.rc
+elif [ -f @CDE_INSTALLATION_TOP@/config/dtlogin.rc ]
 then
-  RC_MASTER=CDE_INSTALLATION_TOP/config/dtlogin.rc
+  RC_MASTER=@CDE_INSTALLATION_TOP@/config/dtlogin.rc
 fi
 
 RC_COPY=/etc/init.d/dtlogin
 
-XCOMM
-XCOMM Allow for configured and factory versions of dtlogin.xml
-XCOMM
+#
+# Allow for configured and factory versions of dtlogin.xml
+#
 
-if [ -f CDE_CONFIGURATION_TOP/config/dtlogin.xml ]
+if [ -f @CDE_CONFIGURATION_TOP@/config/dtlogin.xml ]
 then
-  SVC_MASTER=CDE_CONFIGURATION_TOP/config/dtlogin.xml
-elif [ -f CDE_INSTALLATION_TOP/config/dtlogin.xml ]
+  SVC_MASTER=@CDE_CONFIGURATION_TOP@/config/dtlogin.xml
+elif [ -f @CDE_INSTALLATION_TOP@/config/dtlogin.xml ]
 then
-  SVC_MASTER=CDE_INSTALLATION_TOP/config/dtlogin.xml
+  SVC_MASTER=@CDE_INSTALLATION_TOP@/config/dtlogin.xml
 fi
 
 SVC_COPY=application/graphical-login/dtlogin
@@ -87,7 +86,7 @@ LEVEL_0_KILL=/etc/rc0.d/K10dtlogin
 LEVEL_1_KILL=/etc/rc1.d/K10dtlogin
 LEVEL_2_START=/etc/rc2.d/S99dtlogin
 
-DTDSPMSG=/usr/dt/bin/dtdspmsg
+DTDSPMSG=@CDE_INSTALLATION_TOP@/bin/dtdspmsg
 
 NAWK=/usr/bin/nawk
 
@@ -101,15 +100,15 @@ fi
 
 if [ $arg_count -ne 1 ]; then
 	echo " "
-        HASH
-        HASH Display error message for too many arguments
-        HASH
+        #
+        # Display error message for too many arguments
+        #
         if [ $arg_count -gt 1 ]; then
                 Message 8 "Usage: Too many arguments"
  
-        HASH
-        HASH Display error message for NULL arguments passed
-        HASH
+        #
+        # Display error message for NULL arguments passed
+        #
         elif [ $arg_count -eq 0 ]; then
                 Message 9 "Usage: Needs one argument"
  
@@ -136,33 +135,33 @@ nawk_check() {
 }
 
 
-XCOMM Following inetdSP() procedure is from Sun CDE SI post_install
-XCOMM configMin file.  It adds the Subprocess Control daemon inetd.conf
-XCOMM line so it points to /usr/dt/bin/dtspcd.
+# Following inetdSP() procedure is from Sun CDE SI post_install
+# configMin file.  It adds the Subprocess Control daemon inetd.conf
+# line so it points to @CDE_INSTALLATION_TOP@/bin/dtspcd.
 
 inetdSP()
 {
 FILE=/etc/inetd.conf
 TMPFILE=/tmp/inetd.conf
 
-XCOMM
-XCOMM check for existence of /etc/inetd.conf
-XCOMM
+#
+# check for existence of /etc/inetd.conf
+#
 
     if [ ! -f $FILE ]   # highly unlikely
     then
         echo "" >$FILE
     fi
 
-XCOMM
-XCOMM see if it already exists
-XCOMM
+#
+# see if it already exists
+#
 
     $NAWK '{if ($1 == "dtspc")
                 print $0 > "/tmp/dtspc-already-there"
          }' $FILE >/dev/null
 
-    DTSPCD=CDE_INSTALLATION_TOP/bin/dtspcd
+    DTSPCD=@CDE_INSTALLATION_TOP@/bin/dtspcd
 
     if [ ! -f /tmp/dtspc-already-there ]
     then
@@ -171,9 +170,9 @@ XCOMM
         rm /tmp/dtspc-already-there
     fi
 
-XCOMM
-XCOMM remove legacy entries like dtspcd
-XCOMM
+#
+# remove legacy entries like dtspcd
+#
 
     $NAWK '{if ($1 == "dtspcd" || $1 == "#dtspcd")
                 ;
@@ -187,18 +186,18 @@ XCOMM
 FILE=/etc/services
 TMPFILE=/tmp/services
 
-XCOMM
-XCOMM check for existence of /etc/services
-XCOMM
+#
+# check for existence of /etc/services
+#
 
     if [ ! -f $FILE ]   # highly unlikely
     then
         echo "" >$FILE
     fi
 
-XCOMM
-XCOMM see if it already exists
-XCOMM
+#
+# see if it already exists
+#
     $NAWK '{if ($1 == "dtspc")
                 print $0 > "/tmp/dtspc-already-there"
          }' $FILE >/dev/null
@@ -210,9 +209,9 @@ XCOMM
         rm /tmp/dtspc-already-there
     fi
 
-XCOMM
-XCOMM remove legacy entries like dtspcd
-XCOMM
+#
+# remove legacy entries like dtspcd
+#
 
     $NAWK '{if ($1 == "dtspcd" || $1 == "#dtspcd")
                 ;
@@ -225,19 +224,19 @@ XCOMM
 }
 
 
-XCOMM Following inetdTT() procedure code from Sun CDE SI post_install
-XCOMM configTT file.  It updates the ToolTalk daemon inetd.conf
-XCOMM line so it points to /usr/dt/bin/rpc.ttdbserverd.
+# Following inetdTT() procedure code from Sun CDE SI post_install
+# configTT file.  It updates the ToolTalk daemon inetd.conf
+# line so it points to @CDE_INSTALLATION_TOP@/bin/rpc.ttdbserverd.
 
 inetdTT()
 {
 FILE=/etc/inetd.conf
 TMPFILE=/tmp/inetd.conf
-TTDBSERVERD=CDE_INSTALLATION_TOP/bin/rpc.ttdbserverd
+TTDBSERVERD=@CDE_INSTALLATION_TOP@/bin/rpc.ttdbserverd
 
-XCOMM
-XCOMM  remove any non-dt ttdbserverd line
-XCOMM
+#
+#  remove any non-dt ttdbserverd line
+#
 
     $NAWK -v ttdb=$TTDBSERVERD \
         '{if ($1 == "100083/1" && $6 != ttdb)
@@ -249,9 +248,9 @@ XCOMM
     cp $TMPFILE $FILE
     rm $TMPFILE
 
-XCOMM
-XCOMM  add dt ttdbserverd line if its not already there
-XCOMM
+#
+#  add dt ttdbserverd line if its not already there
+#
 
     $NAWK '{if ($1 == "100083/1")
                 print $0 > "/tmp/tt-already-there"
@@ -267,8 +266,8 @@ XCOMM
 }
 
 
-XCOMM Following owTT() procedure updates the ToolTalk daemon inetd.conf
-XCOMM line so it points to /usr/openwin/bin/rpc.ttdbserverd.
+# Following owTT() procedure updates the ToolTalk daemon inetd.conf
+# line so it points to /usr/openwin/bin/rpc.ttdbserverd.
 
 owTT()
 {
@@ -276,9 +275,9 @@ FILE=/etc/inetd.conf
 TMPFILE=/tmp/inetd.conf
 TTDBSERVERD=/usr/openwin/bin/rpc.ttdbserverd
 
-XCOMM
-XCOMM remove any non-ow ttdbserverd line
-XCOMM
+#
+# remove any non-ow ttdbserverd line
+#
 
     $NAWK -v ttdb=$TTDBSERVERD \
         '{if ($1 == "100083/1" && $6 != ttdb)
@@ -290,9 +289,9 @@ XCOMM
     cp $TMPFILE $FILE
     rm $TMPFILE
 
-XCOMM
-XCOMM add ow ttdbserverd line if its not already there
-XCOMM
+#
+# add ow ttdbserverd line if its not already there
+#
 
     $NAWK '{if ($1 == "100083/1")
                 print $0 > "/tmp/tt-already-there"
@@ -308,19 +307,19 @@ XCOMM
 }
 
 
-XCOMM Following inetdCM() procedure is from Sun CDE SI post_install
-XCOMM configRun file.  It updates the Calendar Manager daemon inetd.conf
-XCOMM line so it points to /usr/dt/bin/rpc.cmsd.
+# Following inetdCM() procedure is from Sun CDE SI post_install
+# configRun file.  It updates the Calendar Manager daemon inetd.conf
+# line so it points to @CDE_INSTALLATION_TOP@/bin/rpc.cmsd.
 
 inetdCM()
 {
 FILE=/etc/inetd.conf
 TMPFILE=/tmp/inetd.conf
-CMSD=CDE_INSTALLATION_TOP/bin/rpc.cmsd
+CMSD=@CDE_INSTALLATION_TOP@/bin/rpc.cmsd
 
-XCOMM
-XCOMM remove any non-dt rpc.cmsd line
-XCOMM
+#
+# remove any non-dt rpc.cmsd line
+#
 
     $NAWK -v cmsd=$CMSD \
         '{if ( ($1 == "100068/2-4" || $1 == "100068/2-5") && $6 != cmsd)
@@ -332,9 +331,9 @@ XCOMM
     cp $TMPFILE $FILE
     rm $TMPFILE
 
-XCOMM 
-XCOMM remove possible old dt cmsd level 2-4 entry
-XCOMM
+# 
+# remove possible old dt cmsd level 2-4 entry
+#
 
     $NAWK -v cmsd=$CMSD \
         '{if ($1 == "100068/2-4" && $6 == cmsd)
@@ -346,9 +345,9 @@ XCOMM
     cp $TMPFILE $FILE
     rm $TMPFILE
 
-XCOMM
-XCOMM add dt cmsd line in needed 
-XCOMM
+#
+# add dt cmsd line in needed 
+#
 
     $NAWK -v cmsd=$CMSD \
         '{if ($6 == cmsd && $1 == "100068/2-5")
@@ -364,8 +363,8 @@ XCOMM
 }
 
 
-XCOMM Following owCM() procedure updates the Calendar Manager daemon inetd.conf
-XCOMM line so it points to /usr/openwin/bin/cmsd.
+# Following owCM() procedure updates the Calendar Manager daemon inetd.conf
+# line so it points to /usr/openwin/bin/cmsd.
 
 owCM()
 {
@@ -373,9 +372,9 @@ FILE=/etc/inetd.conf
 TMPFILE=/tmp/inetd.conf
 CMSD=/usr/openwin/bin/rpc.cmsd
 
-XCOMM
-XCOMM remove any non-ow rpc.cmsd line
-XCOMM
+#
+# remove any non-ow rpc.cmsd line
+#
 
     $NAWK -v cmsd=$CMSD \
         '{if ( ($1 == "100068/2-4" || $1 == "100068/2-5") && $6 != cmsd )
@@ -387,19 +386,19 @@ XCOMM
     cp $TMPFILE $FILE
     rm $TMPFILE
 
-XCOMM
-XCOMM  add openwin rpc.cmsd line if not already there 
-XCOMM
+#
+#  add openwin rpc.cmsd line if not already there 
+#
 
     $NAWK -v cmsd=$CMSD \
         '{if ( ($1 == "100068/2-4" || $1 == "100068/2-5") && $6 == cmsd )
                 print $0 > "/tmp/cmsd-already-there"
          }' $FILE >/dev/null
 
-XCOMM
-XCOMM if it is not there, add it
-XCOMM  (note openwin cmsd is one rev back, its at level 2-4)
-XCOMM
+#
+# if it is not there, add it
+#  (note openwin cmsd is one rev back, its at level 2-4)
+#
 
     if [ ! -f /tmp/cmsd-already-there ]
     then
@@ -497,7 +496,7 @@ case "$mode" in
 	inetdCM
 	inetdTT
 	Message 14 "done"
-	Message 27 "Next system boot, following will be run from /usr/dt/bin"
+	Message 27 "Next system boot, following will be run from @CDE_INSTALLATION_TOP@/bin"
 	Message 28 "    rpc.ttdbserverd         (ToolTalk)" 
 	Message 29 "    rpc.cmsd                (Calendar Manager)"
 	Message 30 "    dtspcd                  (Subprocess Control)"
