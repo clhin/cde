@@ -17,7 +17,7 @@ BUILT_SOURCES = dtbuilder.h dtbuilder.c about_box_ui.h appfw_ui.h \
 		panedwin_ed_ui.h proj_ui.h revolv_ui.h scale_ui.h sep_ui.h \
 		spinbox_ui.h termp_ui.h textf_ui.h textp_ui.h
 
-appdefaults_DATA = Dtbuilder
+dist_appdefaults_DATA = Dtbuilder
 
 DTCODEGENCAT = NLSPATH=$(top_builddir)/programs/dtappbuilder/src/abmf/dtcodegen.cat
 
@@ -188,10 +188,6 @@ dtbuilder.msg: dtbuilder.msg.src
 
 dtbuilder.c: dtbuilder.c.src
 	$(CP) $? $@ && chmod ug+w $@
-
-Dtbuilder: Dtbuilder.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(LOCAL_CPP_DEFINES) $< > $@
 
 if SOLARIS
 

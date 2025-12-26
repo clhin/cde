@@ -775,6 +775,7 @@ programs/dtappbuilder/src/libABobjXm/Makefile
 programs/dtappbuilder/src/libABil/Makefile
 programs/dtappbuilder/src/abmf/Makefile
 programs/dtappbuilder/src/ab/Makefile
+programs/dtappbuilder/src/ab/Dtbuilder
 
 programs/dtappintegrate/Makefile
 programs/dtappintegrate/dtappintegrate
