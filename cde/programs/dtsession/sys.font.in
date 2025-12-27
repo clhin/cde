@@ -3,7 +3,7 @@
 !#
 !#   sys.font:  The default session font resource file
 !#
-!#   placed in:	CDE_INSTALLATION_TOP/config/C/sys.fonts
+!#   placed in:	@CDE_INSTALLATION_TOP@/config/C/sys.fonts
 !#
 !#   (c) Copyright 1993, 1994 Hewlett-Packard Company
 !#   (c) Copyright 1993, 1994 International Business Machines Corp.
@@ -18,10 +18,10 @@
 !# Font resource values must be a valid font alias name.
 !#
 !# Font resource values must match exactly the default font resources 
-!# specified in CDE_INSTALLATION_TOP/app-defaults/%L/Dtstyle
+!# specified in @CDE_INSTALLATION_TOP@/app-defaults/%L/Dtstyle
 !###
 
-XCOMM if WIDTH > 1175
+# if WIDTH > 1175
 !###
 !#   High Resolution Displays
 !#
@@ -37,8 +37,8 @@ XCOMM if WIDTH > 1175
   *DtEditor*textFontList: %|nls-6-dt-interface user-medium-r-normal-m*-*-*-*-*-*-*-*-*:^*DtEditor*textFontList|
   *Font:                  %|nls-7-dt-interface user-medium-r-normal-m*-*-*-*-*-*-*-*-*^*Font|
   *FontSet:               %|nls-8-dt-interface user-medium-r-normal-m*-*-*-*-*-*-*-*-*^*FontSet|
-XCOMM else
-XCOMM if WIDTH > 850
+# else
+# if WIDTH > 850
 !###
 !#   Medium Resolution Displays
 !###
@@ -53,7 +53,7 @@ XCOMM if WIDTH > 850
   *DtEditor*textFontList: %|nls-14-dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*:^*DtEditor*textFontList|
   *Font:                  %|nls-15-dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*^*Font|
   *FontSet:               %|nls-16-dt-interface user-medium-r-normal-xs*-*-*-*-*-*-*-*-*^*FontSet|
-XCOMM else
+# else
 !###
 !#   Low Resolution Displays
 !###
@@ -68,6 +68,6 @@ XCOMM else
   *DtEditor*textFontList: %|nls-22-dt-interface user-medium-r-normal-xs*-*-*-*-*-*-*-*-*:^*DtEditor*textFontList|
   *Font:                  %|nls-23-dt-interface user-medium-r-normal-xs*-*-*-*-*-*-*-*-*^*Font|
   *FontSet:               %|nls-24-dt-interface user-medium-r-normal-xs*-*-*-*-*-*-*-*-*^*FontSet|
-XCOMM endif
-XCOMM endif
+# endif
+# endif
 

@@ -5,7 +5,7 @@
 !#
 !#   sys.resources:	The Default Session Resource File
 !#
-!#   Placed In:		CDE_INSTALLATION_TOP/config/<LANG>/sys.resources
+!#   Placed In:		@CDE_INSTALLATION_TOP@/config/<LANG>/sys.resources
 !#
 !#   (c) Copyright 1993, 1994 Hewlett-Packard Company
 !#   (c) Copyright 1993, 1994 International Business Machines Corp.
@@ -21,10 +21,10 @@
 !# Font resource values must be a valid font alias name.
 !#
 !# Font resource values must match exactly the default font resources 
-!# specified in /usr/dt/app-defaults/%L/Dtstyle
+!# specified in @CDE_INSTALLATION_TOP@app-defaults/%L/Dtstyle
 !###
 
-XCOMM if WIDTH > 1175
+# if WIDTH > 1175
 !###
 !#   High Resolution Displays
 !#
@@ -40,8 +40,8 @@ XCOMM if WIDTH > 1175
   *DtEditor*textFontList: -dt-interface user-medium-r-normal-m*-*-*-*-*-*-*-*-*:
   *Font:                  -dt-interface user-medium-r-normal-m*-*-*-*-*-*-*-*-*
   *FontSet:               -dt-interface user-medium-r-normal-m*-*-*-*-*-*-*-*-*
-XCOMM else
-XCOMM if WIDTH < 851
+# else
+# if WIDTH < 851
 !###
 !#   Low Resolution Displays
 !###
@@ -56,7 +56,7 @@ XCOMM if WIDTH < 851
   *DtEditor*textFontList: -dt-interface user-medium-r-normal-xs*-*-*-*-*-*-*-*-*:
   *Font:                  -dt-interface user-medium-r-normal-xs*-*-*-*-*-*-*-*-*
   *FontSet:               -dt-interface user-medium-r-normal-xs*-*-*-*-*-*-*-*-*
-XCOMM else
+# else
 !###
 !#   Medium Resolution Displays (always default if no cpp present on system)
 !###
@@ -71,8 +71,8 @@ XCOMM else
   *DtEditor*textFontList: -dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*:
   *Font:                  -dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*
   *FontSet:               -dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*
-XCOMM endif
-XCOMM endif
+# endif
+# endif
 
 
 *sessionVersion:	3.0
@@ -90,23 +90,23 @@ dtsession*saverList: StartDtscreenBlank
 !#  display dependent resources
 !#
 !#################################################################
-XCOMM if WIDTH > 1175
+# if WIDTH > 1175
 
-XCOMM else
-XCOMM if WIDTH < 851 
+# else
+# if WIDTH < 851 
 Dtwm*resizeBorderWidth: 5
 Dtfile*view:            small_icon
 Dtfile*desktopIcon:     small
 Dtfile*dirWidth:        400
 Dtfile*dirHeight:       300
-XCOMM else
+# else
 Dtwm*resizeBorderWidth: 5
 Dtfile*view:            large_icon
 Dtfile*desktopIcon:     large
 Dtfile*dirWidth:        555
 Dtfile*dirHeight:       400
-XCOMM endif
-XCOMM endif
+# endif
+# endif
 
 !#################################################################
 !#
@@ -209,14 +209,14 @@ XCOMM endif
 !#  display dependent resources for applications
 !#
 !#################################################################
-XCOMM if WIDTH > 1175
+# if WIDTH > 1175
   xterm*Font: -dt-interface user-medium-r-normal-m*-*-*-*-*-*-*-iso8859-*
-XCOMM else
-XCOMM if WIDTH < 851
+# else
+# if WIDTH < 851
   xterm*Font: -dt-interface user-medium-r-normal-xs*-*-*-*-*-*-*-iso8859-*
-XCOMM else
+# else
   xterm*Font: -dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-iso8859-*
-XCOMM endif
-XCOMM endif
+# endif
+# endif
 
 !################             eof          #######################

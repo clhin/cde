@@ -26,7 +26,7 @@ dtsession_SOURCES = SmMain.c SmHelp.c SmGlobals.c SmCommun.c		\
 	SmMigResources.h SmSave.h SmXrm.h
 
 
-dtsession_LDADD = $(DTCLIENTLIBS) $(XTOOLLIB) $(DTPAMSVCLIB)
+dtsession_LDADD = $(DTCLIENTLIBS) $(XTOOLLIB) $(DTPAMSVCLIB) $(TIRPCLIB)
 
 if SOLARIS
 dtsession_SOURCES += OWsync.c
@@ -35,7 +35,7 @@ endif
 
 if LINUX
 dtsession_CFLAGS += -DUSE_X11SSEXT
-dtsession_LDADD += $(TIRPCLIB) -lXss
+dtsession_LDADD += -lXss
 endif
 
 if BSD
@@ -43,88 +43,10 @@ dtsession_CFLAGS += -DUSE_X11SSEXT
 dtsession_LDADD +=  -lXss
 endif
 
-DTSM_CMD1 = $(CDE_INSTALLATION_TOP)/bin/dtaction OpenHomeDir
-DTSM_CMD2 = $(CDE_INSTALLATION_TOP)/bin/dtfile -dir ~ -geometry +700+0
-DTSM_CMD4 = $(CDE_INSTALLATION_TOP)/bin/dthelpview -helpVolume Intromgr
-DTSM_CMD5 = $(CDE_INSTALLATION_TOP)/bin/dtaction Dthelpgen_delay
-
-LOCAL_CPP_DEFINES = -DCDE_CONFIGURATION_TOP=$(CDE_CONFIGURATION_TOP) \
-		    -DCDE_INSTALLATION_TOP=$(CDE_INSTALLATION_TOP) \
-		    -DXRDB=$(XRDB) \
-		    -DKORNSHELL=$(KSH) \
-		    -DDTSM_CMD1="\"$(DTSM_CMD1)\"" \
-		    -DDTSM_CMD2="\"$(DTSM_CMD2)\"" \
-		    -DDTSM_CMD4="\"$(DTSM_CMD4)\"" \
-		    -DDTSM_CMD5="\"$(DTSM_CMD5)\""
-
 SUBDIRS = config
 
-if LINUX
-LOCAL_CPP_DEFINES += -Dlinux -D__linux__
-endif
-
-if FREEBSD
-LOCAL_CPP_DEFINES += -DFREEBSD -D__FreeBSD__
-endif
-
-if SOLARIS
-LOCAL_CPP_DEFINES += -Dsun
-endif
-
-if OPENBSD
-LOCAL_CPP_DEFINES += -D__OpenBSD__
-endif
-
-if NETBSD
-LOCAL_CPP_DEFINES += -D__NetBSD__
-endif
-
-if BSD
-LOCAL_CPP_DEFINES += -DCSRG_BASED
-endif
-
-
-BUILT_SOURCES = Dtsession dtloadresources dtsession.msg sys.font	\
-	sys.resources sys.resources.ive sys.session sys.session.ive
-CLEANFILES = $(BUILT_SOURCES)
-
-Dtsession: Dtsession.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(LOCAL_CPP_DEFINES) $< > $@
-
-dtsession_res: dtloadresources
-	$(RM) $@
-	$(LN_S) $< $@
-
-dtloadresources: dtloadresources.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(LOCAL_CPP_DEFINES) $< > $@
-	chmod 755 $@
-
-dtsession.msg: dtsession.msg.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(LOCAL_CPP_DEFINES) $< > $@
-
-sys.font: sys.font.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(LOCAL_CPP_DEFINES) $< > $@
-
-sys.resources: sys.resources.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(LOCAL_CPP_DEFINES) $< > $@
-
-sys.resources.ive: sys.resources.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(LOCAL_CPP_DEFINES) -DIVE $< > $@
-
-sys.session: sys.session.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(LOCAL_CPP_DEFINES) $< > $@
-
-sys.session.ive: sys.session.src
-	$(RM) $@
-	$(GENCPP) -P -DXCOMM=# $(LOCAL_CPP_DEFINES) -DIVE $< > $@
-
+CLEANFILES = Dtsession dtsession_res dtsession.msg sys.font	\
+	sys.resources sys.session
 
 # systems without a PAM library need dtsession to be SUID root
 

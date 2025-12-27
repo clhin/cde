@@ -57,7 +57,7 @@ $ DO NOT TRANSLATE THIS SET.
 2 No defaults files exist.  No applications will be restarted.
 3 No defaults files exist.  No applications will be restarted.
 4 Unable to remove session directory.  Make sure write permissions exist \
-on $HOME/.dt directory.  Invalid session files will not be removed.
+on $HOME/@CDE_USER_TOP@ directory.  Invalid session files will not be removed.
 5 Unable to malloc memory for operation.
 6 Unable to lock display.  Another application may have the pointer or \
 keyboard grabbed.
@@ -110,13 +110,13 @@ $ DO NOT TRANSLATE THIS SET.
 restored.
 2 Invalid client settings file.  No settings restored.
 3 Unable to exec %s.
-4 Unable to exec process CDE_INSTALLATION_TOP/bin/dtwm.  No window manager will be started.
+4 Unable to exec process @CDE_INSTALLATION_TOP@/bin/dtwm.  No window manager will be started.
 5 You have reached the maximum allowed number of remote clients.  No further remote clients will be restored.
 6 Invalid display/language independent resource file.  No display/language independent resources will be restored.
 7 The wmStartupCommand resource is set to:\n\n\
       %s\n\n\
 This file does not exist or is not executable.\n\
-CDE_INSTALLATION_TOP/bin/dtwm will be started instead.\n
+@CDE_INSTALLATION_TOP@/bin/dtwm will be started instead.\n
 8 An attempt to restore the following\n\
 command (using the DT remote execution process)\n\
 on host "%s" failed:\n\n\
@@ -128,7 +128,7 @@ The following execution string will be tried:\n\n\
 This message indicates you tried to start a\n\
 window manager that is built into an X terminal.\n\
 This will only work with X terminals that support this protocol.\n\
-CDE_INSTALLATION_TOP/bin/dtwm will be started instead.\n
+@CDE_INSTALLATION_TOP@/bin/dtwm will be started instead.\n
 
 
 $set 18
@@ -198,7 +198,7 @@ $ 10 OBS- Logout Confirmation
 $ Message 11,12 are part of the error dialog that appears when the DT
 $ messaging system dies.
 $ These messages are generated when you kill the Message
-$ Server, which is /usr/dt/bin/ttsession.
+$ Server, which is @CDE_INSTALLATION_TOP@/bin/ttsession.
 $ Message 11 is obsolete.  Message 38 replaces message 11
 
 $ 11 DT Messaging System Inoperative\n\n\
@@ -258,7 +258,7 @@ For additional information, see the CDE User's Guide.
 $ Message 38 is part of the error dialog that appears when the DT
 $ messaging system dies.
 $ This messages are generated when you kill the Message
-$ Server), which is /usr/dt/bin/ttsession.
+$ Server), which is @CDE_INSTALLATION_TOP@/bin/ttsession.
 38 Messaging System Inoperative\n\n\
 To restart:\n\n\
 1) Save all open data files.\n\

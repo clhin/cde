@@ -1,0 +1,10 @@
+@NETBSD_TRUE@auth sufficient /usr/pkg/lib/security/pam_pwauth_suid.so
+@FREEBSD_TRUE@auth sufficient /usr/local/lib/security/pam_pwauth_suid.so
+
+auth required pam_unix.so
+
+account required pam_deny.so
+
+session required pam_deny.so
+
+password required pam_deny.so

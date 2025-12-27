@@ -15,17 +15,13 @@
 !#
 !######################################################################
 
-XCOMM include "Dt"
+# include "Dt"
 
-!#Dtsession*wmStartupCommand:	CDE_INSTALLATION_TOP/bin/dtwm
+!#Dtsession*wmStartupCommand:	@CDE_INSTALLATION_TOP@/bin/dtwm
 !#Dtsession*coverScreen:	False
 
 Dtsession*drawArea.background: black
-#ifdef __FreeBSD__
-Dtsession*lockLabelPixmap.imageName: FreeBSDDtlogo
-#else
-Dtsession*lockLabelPixmap.imageName: Dtlogo
-#endif
+Dtsession*lockLabelPixmap.imageName: @DTLOGO@
 
 Dtsession*ignoreEnvironment:	DISPLAY,SESSION_MANAGER,AUDIOSERVER
 

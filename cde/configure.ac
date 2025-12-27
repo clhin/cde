@@ -18,6 +18,8 @@ dnl this is blank for a release, or contains an alpha character to indicate a
 dnl dev release.
 CDE_VERSION_DEV=
 
+DTLOGO=Dtlogo
+
 AC_SUBST(CDE_VERSION_MAJOR)
 AC_SUBST(CDE_VERSION_MINOR)
 AC_SUBST(CDE_VERSION_MICRO)
@@ -85,6 +87,7 @@ case "${build_os}" in
                 # fbsd needs the iconv plug to avoid conflict with libiconv
                 # and libc implementations.  We prefer the libc impl.
                 SOURCE_CPP_DEFINES="${SOURCE_CPP_DEFINES} -DLIBICONV_PLUG"
+		DTLOGO=FreeBSDDtlogo
 		;;
 	openbsd*)
 		build_openbsd=yes
@@ -102,6 +105,8 @@ case "${build_os}" in
 		build_aix=yes
 		;;
 esac
+
+AC_SUBST(DTLOGO)
 
 AM_CONDITIONAL([LINUX], [test "$build_linux" = "yes"])
 AM_CONDITIONAL([BSD], [test "$bsd" = "yes"])
@@ -732,7 +737,14 @@ programs/dtlogin/Makefile
 programs/dtlogin/config/Makefile
 
 programs/dtsession/Makefile
+programs/dtsession/Dtsession
+programs/dtsession/dtsession_res
+programs/dtsession/dtsession.msg
+programs/dtsession/sys.font
+programs/dtsession/sys.session
+programs/dtsession/sys.resources
 programs/dtsession/config/Makefile
+programs/dtsession/config/dtsession
 
 programs/dthello/Makefile
 programs/dthello/Dthello
